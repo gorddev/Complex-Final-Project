@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/gordie/Developer/C++ Projects/Complex_Final_Proj/cmake-emscripten/cmake_install.cmake",
+		"/Users/gordie/Developer/C++ Projects/Complex_Final_Proj/cmake-emscripten/SDL_API/cmake_install.cmake",
+		"/Users/gordie/Developer/C++ Projects/Complex_Final_Proj/cmake-emscripten/cmakelists/emscripten/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
