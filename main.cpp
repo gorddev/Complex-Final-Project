@@ -43,6 +43,7 @@ SDL_AppResult SDL_AppInit(void** userdata, int argc, char** argv) {
 
     #ifdef __EMSCRIPTEN__
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, win, EM_FALSE, on_browser_resize);
+    on_browser_resize(0, nullptr, nullptr);
     #endif
 
     return SDL_APP_CONTINUE;

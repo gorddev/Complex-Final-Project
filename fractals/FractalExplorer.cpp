@@ -34,12 +34,12 @@ reset_display:
         it->imguiEnd();
 
         if (remove) {
-            fractals.push_back(it->extract());
+            cachedFractals.push_back(it->extract());
             panels.erase(it);
             reorganize(window);
             goto reset_display;
         } else {
-            it->draw(window, {cursor.selectionPos.x * window.getWidth(), cursor.selectionPos.y * window.getHeight()});
+            it->draw(window, cursor.selectionPos);
         }
     }
 
@@ -86,41 +86,46 @@ void FractalExplorer::onMouseWheel(const Window& window, const Mouse& mouse) {
 }
 
 void FractalExplorer::instantiateNewFractalPanel(fractal_id id) {
-    auto target = panels.size();
+    auto targetPanel = panels.size();
 
-    if (target >= fractal::maxFractalViews) {
+    if (targetPanel >= fractal::maxFractalViews) {
         // If we already have the max number of views on the screen, steal the
         // existing fractal from the current view
-        target = fractal::maxFractalViews - 1;
-        if (auto ptr = panels[target].extract()) {
-            fractals.push_back(std::move(ptr));
+        targetPanel = fractal::maxFractalViews - 1;
+        if (auto ptr = panels[targetPanel].extract()) {
+            cachedFractals.push_back(std::move(ptr));
         }
     } else {
         // Otherwise just create a new fractalViewer
         panels.emplace_back();
     }
 
-    auto it = locateExistingFractal(id);
-    if (it != fractals.end()) {
-        std::println("No recompile option {}: {}!", id, (*it)->name);
-        panels[target].embed(std::move(*it));
-        fractals.erase(it);
+    auto it = locateCachedFractal(id);
+    if (it != cachedFractals.end()) {
+        panels[targetPanel].embed(std::move(*it));
+        cachedFractals.erase(it);
+        compilerGUI.clearCompileError();
     } else {
-        panels[target].embed(
-            Fractal::make_unique(
-                fractal::fractalInfo[id].name,
-                fractal::fractalInfo[id].vertShader.c_str(),
-                fractal::fractalInfo[id].fragShader.c_str()
-            )
-        );
+        try {
+            auto unique = Fractal::make_unique(
+                fractal::fractalInfo[id]
+            );
+            panels[targetPanel].embed(std::move(unique));
+            compilerGUI.clearCompileError();
+        } catch (...) {
+            compilerGUI.reportCompileError();
+            panels.pop_back();
+        }
     }
 
-    std::println("{}", panels.back().checkHealth());
+    if (!panels.empty()) {
+        std::println("{}", panels.back().checkHealth());
+    }
 }
 
-std::vector<std::unique_ptr<Fractal>>::iterator FractalExplorer::locateExistingFractal(fractal_id id) {
+std::vector<std::unique_ptr<Fractal>>::iterator FractalExplorer::locateCachedFractal(fractal_id id) {
     auto targetName = fractal::fractalInfo[id].name;
-    auto it = std::ranges::find_if(fractals,
+    auto it = std::ranges::find_if(cachedFractals,
         [&](const auto& f) { return f->name == targetName; });
     return it;
 }

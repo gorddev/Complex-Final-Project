@@ -3,29 +3,39 @@
 #include <string>
 #include <utility>
 
-
+#include "FractalInfo.hpp"
 
 gan::Fractal::Fractal(const GLint uResolution, const GLint uMousePos, const GLint uIterations, const GLint uScale,
-                const GLint uStartPos, const GLint uColorCount, const GLint uColors,
-                const GLuint vao, const GLuint vbo, const GLuint shader, std::string name)
-        :   fractalPos({0,0}),
-            scale(1.0),
+                const GLint uCenterPos, const GLint uWindowPos, const GLint uColorCount, const GLint uColors,
+                const GLuint vao, const GLuint vbo, const GLuint shader, std::string name,
+                fractal::Uniform extraUniforms[], const size_t numExtraUniforms)
+        :   centerPos({0,0}),
+            scale(fractal::defaultScale),
+            properties{},
+            numProperties(numExtraUniforms),
             iterations(30),
             name(std::move(name)),
             uResolution(uResolution),
-            uMousePos(uMousePos),
-            uIterations(uIterations),
-            uScale(uScale), uStartPos(uStartPos), uColorCount(uColorCount),
-            uColors(uColors), vao(vao), vbo(vbo),
-            shader(shader)
+            uMousePos(uMousePos), uIterations(uIterations), uScale(uScale),
+            uCenterPos(uCenterPos),
+            uWindowDimensions(uWindowPos), uColorCount(uColorCount), uColors(uColors),
+            vao(vao),
+            vbo(vbo), shader(shader)
 {
     uNumColors1i();
     uColors3fv();
+    healthStr = checkHealth();
+    // Get all extra uniforms into the fractal.
+    for (int i = 0; i < std::min(numExtraUniforms, fractal::maxExtraUniforms); i++) {
+        properties[i] = extraUniforms[i];
+        uProperties[i] = glGetUniformLocation(shader, extraUniforms[i].shaderHandle);
+        uProperty(i);
+    }
 }
 
 // --------------------------------------------------------- //
 
-static void create_fractal_gl_object(GLuint& vao, GLuint& vbo, GLuint& program, const gan::path& vShd, const gan::path& fShd) {
+void create_fractal_gl_object(GLuint& vao, GLuint& vbo, GLuint& program, const gan::path& vShd, const gan::path& fShd) {
     // next we create our vertex array;
     constexpr float vertices[] = {
         -1.f,-1.f, 0.f,   -1.f, 1.f, 0.f,  1.f, 1.f, 0.f,
@@ -53,37 +63,39 @@ static void create_fractal_gl_object(GLuint& vao, GLuint& vbo, GLuint& program, 
     glBindVertexArray(0);
 
     // now time for the shader program;
-    program = gan::err::unwrap(
-        gan::gl::makeShaderProgram({vShd}, {fShd}),
-        "Fractal::make()", "Failed to compile shader program.");
+    program = gan::err::unwrap(gan::gl::makeShaderProgram({vShd}, {fShd}),
+        "Fractal.cpp::create_fractal_gl_object()", "Could not extract shader.");
 }
 
-gan::Fractal gan::Fractal::make(const std::string& name, const gan::path& vertShader, const gan::path& fragShader) {
+gan::Fractal gan::Fractal::make(FractalInfo info) {
     // first ensure that SDL has been initialized
     gan::ensure_SDL_init();
 
     GLuint vao, vbo, program;
-    create_fractal_gl_object(vao, vbo, program, vertShader, fragShader);
+
+    create_fractal_gl_object(vao, vbo, program, info.vertShader, info.fragShader);
 
     return Fractal{
         glGetUniformLocation(program, "uResolution"),
         glGetUniformLocation(program, "uMousePos"),
         glGetUniformLocation(program, "uIterations"),
         glGetUniformLocation(program, "uScale"),
-        glGetUniformLocation(program, "uStartPos"),
+        glGetUniformLocation(program, "uCenterPos"),
+        glGetUniformLocation(program, "uWindowDimensions"),
         glGetUniformLocation(program, "uColorCount"),
         glGetUniformLocation(program, "uColors"),
         vao, vbo, program,
-        name
+        info.name,
+        info.extraUniforms, info.numExtraUniforms
     };
 }
 
-std::unique_ptr<gan::Fractal> gan::Fractal::make_unique(const std::string& name, const gan::path& vertShader, const gan::path& fragShader) {
+std::unique_ptr<gan::Fractal> gan::Fractal::make_unique(FractalInfo info) {
     // first ensure that SDL has been initialized
     ensure_SDL_init();
 
     GLuint vao, vbo, program;
-    create_fractal_gl_object(vao, vbo, program, vertShader, fragShader);
+    create_fractal_gl_object(vao, vbo, program, info.vertShader, info.fragShader);
 
     // ReSharper disable once CppDFAMemoryLeak
     return std::unique_ptr<Fractal>(new Fractal{
@@ -91,48 +103,82 @@ std::unique_ptr<gan::Fractal> gan::Fractal::make_unique(const std::string& name,
         glGetUniformLocation(program, "uMousePos"),
         glGetUniformLocation(program, "uIterations"),
         glGetUniformLocation(program, "uScale"),
-        glGetUniformLocation(program, "uStartPos"),
+        glGetUniformLocation(program, "uCenterPos"),
+        glGetUniformLocation(program, "uWindowDimensions"),
         glGetUniformLocation(program, "uColorCount"),
         glGetUniformLocation(program, "uColors"),
         vao, vbo, program,
-        name
+        info.name,
+        info.extraUniforms, info.numExtraUniforms
     });
 }
 
-std::string gan::Fractal::checkHealth() {
+void smooth_move(const gan::fractal::UniformData& data, gan::fractal::UniformData& sendData) {
+    constexpr float smooth_factor = 0.063f;
+    sendData.x += (data.x - sendData.x) * smooth_factor;
+    sendData.y += (data.y - sendData.y) * smooth_factor;
+    sendData.z += (data.z - sendData.z) * smooth_factor;
+    sendData.w += (data.w - sendData.w) * smooth_factor;
+}
+
+void gan::Fractal::tick() {
+    for (size_t i = 0; i < numProperties; ++i) {
+        if (properties[i].type < fractal::INT) {
+            smooth_move(properties[i].data, smoothProperties[i]);
+            uProperty(i);
+        }
+    }
+}
+
+std::string gan::Fractal::checkHealth() const {
     std::string health;
 
     health += "====== Fractal Health =======\n"
             "Name       = " + name + "\n"
-            "Scale      = " + std::to_string(scale) + "\n"
-            "startPos   = " + std::format("{{{}, {}}}", fractalPos.x, fractalPos.y) + "\n"
-            "iterations = " + std::to_string(iterations) + "\n"
-            "numColors  = " + std::to_string(numColors) + "\n"
-            "colors[0]  = " + std::format("{{{}, {}, {}}}", colors[0].x, colors[0].y, colors[0].z) + "\n"
             "--------- Uniforms ----------\n";
-    auto health_check = [&health](const GLint uniform, const char name[]) {
+    bool healthy = true;
+    auto health_check = [&health, &healthy](const GLint uniform, const char name[]) {
         if (uniform < 0) {
             health += std::format("!! Uniform \'{}\' not found.\n", name);
-        } else health += std::format(":: Uniform \'{}\' found @ index [{}].\n", name, uniform);
+            healthy = false;
+        }
     };
     health_check(uResolution, "uResolution");
     health_check(uMousePos, "uMousePos");
     health_check(uIterations, "uIterations");
     health_check(uScale, "uScale");
-    health_check(uStartPos, "uStartPos");
+    health_check(uCenterPos, "uCenterPos");
 
-    health += "\n";
+    for (size_t i = 0; i < numProperties; ++i) {
+        health_check(uProperties[i], properties[i].shaderHandle);
+    }
+
+    if (healthy) {
+        health += "All uniforms found.\n";
+    }
+
     return health;
 }
 
-void gan::Fractal::uStartPos2f() const {
-    if (uStartPos >= 0) {
+void gan::Fractal::updateHealth() {
+    healthStr = checkHealth();
+}
+
+void gan::Fractal::uCenterPos2f() const {
+    if (uCenterPos >= 0) {
         glUseProgram(shader);
-        glUniform2f(uStartPos, fractalPos.x + pixelPos.x*scale, fractalPos.y - pixelPos.y*scale);
+        glUniform2f(uCenterPos, centerPos.x, centerPos.y);
     }
 }
 
-void gan::Fractal::uMousePos2f(vec2 selectionPos) const {
+void gan::Fractal::uWindowDimensions4f() const {
+    if (uWindowDimensions >= 0) {
+        glUseProgram(shader);
+        glUniform4f(uWindowDimensions, windowPos.x, windowPos.y, windowSize.x, windowSize.y);
+    }
+}
+
+void gan::Fractal::uMousePos2f(const vec2 selectionPos) const {
     if (uMousePos >= 0) {
         glUseProgram(shader);
         glUniform2f(uMousePos, selectionPos.x, selectionPos.y);
@@ -168,7 +214,6 @@ void gan::Fractal::uColors3fv() const {
 }
 
 gan::Fractal::~Fractal() {
-    std::println("FRACTAL DESTROYED");
     if (vao != 0) {
         glDeleteBuffers(1, &vbo);
         glDeleteVertexArrays(1, &vao);
@@ -177,18 +222,20 @@ gan::Fractal::~Fractal() {
 }
 
 gan::Fractal::Fractal(Fractal&& o)
-    noexcept : fractalPos({0, 0}),
-               scale(1.0),
+    noexcept : centerPos({0, 0}),
+               scale(1.0), numProperties(o.numProperties),
                iterations(30),
                name(o.name),
                uResolution(o.uResolution), uMousePos(o.uMousePos), uIterations(o.uIterations),
-               uScale(o.uScale), uStartPos(o.uStartPos), uColorCount(o.uColorCount),
-               uColors(o.uColors), vao(o.vao), vbo(o.vbo),
-               shader(o.shader)
-{
+               uScale(o.uScale), uCenterPos(o.uCenterPos), uWindowDimensions(0), uColorCount(o.uColorCount),
+               uColors(o.uColors), uProperties{}, vao(o.vao), vbo(o.vbo),
+               shader(o.shader) {
     o.vao    = 0;
     o.vbo    = 0;
     o.shader = 0;
+    for (int i = 0; i < numProperties; i++) {
+        properties[i] = o.properties[i];
+    }
 }
 
 gan::Fractal& gan::Fractal::operator=(Fractal&& o) noexcept{
@@ -197,21 +244,65 @@ gan::Fractal& gan::Fractal::operator=(Fractal&& o) noexcept{
     uMousePos   = o.uMousePos;
     uIterations = o.uIterations;
     uScale      = o.uScale;
-    uStartPos   = o.uStartPos;
+    uCenterPos   = o.uCenterPos;
     vao         = o.vao;
     vbo         = o.vbo;
     shader      = o.shader;
     scale       = o.scale;
-    fractalPos  = o.fractalPos;
+    centerPos  = o.centerPos;
     iterations  = o.iterations;
+    for (int i = 0; i < numProperties; i++) {
+        properties[i] = o.properties[i];
+    }
+    *const_cast<size_t*>(&numProperties) = o.numProperties;
     o.vao       = 0;
     o.vbo       = 0;
     o.shader    = 0;
     return *this;
 }
 
+void gan::Fractal::uProperty(const size_t id) const {
+    if (id < numProperties && uProperties[id] >= 0) {
+        const fractal::Uniform& i = properties[id];
+        const fractal::UniformData& s = smoothProperties[id];
 
-void gan::Fractal::draw(const Window& window, const vec2 selectionPos) {
+        glUseProgram(shader);
+        switch (properties[id].type) {
+        case fractal::INT:
+            glUniform1i(uProperties[id], i.data.ix);
+            break;
+        case fractal::IVEC2:
+            glUniform2i(uProperties[id], i.data.ix, i.data.iy);
+            break;
+        case fractal::IVEC3:
+            glUniform3i(uProperties[id], i.data.ix, i.data.iy, i.data.iz);
+            break;
+        case fractal::IVEC4:
+            glUniform4i(uProperties[id], i.data.ix, i.data.iy, i.data.iz, i.data.iw);
+            break;
+        case fractal::FLOAT:
+            glUniform1f(uProperties[id], s.x);
+            break;
+        case fractal::VEC2:
+            glUniform2f(uProperties[id], s.x, s.y);
+            break;
+        case fractal::VEC3:
+            glUniform3f(uProperties[id], s.x, s.y, s.z);
+            break;
+        case fractal::VEC4:
+            glUniform4f(uProperties[id], s.x, s.y, s.z, s.w);
+            break;
+        default:
+            std::string err = "Got invalid enum in uProperty() function Fractal: ";
+            err += std::to_string(static_cast<int>(properties[id].type));
+            throw std::runtime_error(err);
+            break;
+        }
+    }
+}
+
+
+void gan::Fractal::draw(const Window& window, const vec2 selectionPos) const {
     glUseProgram(shader);
 
     if (uResolution >= 0)
@@ -258,5 +349,6 @@ void gan::Fractal::reframe(const Window& window)  {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glBindVertexArray(0);
 
-    uStartPos2f();
+    uCenterPos2f();
+    uWindowDimensions4f();
 }

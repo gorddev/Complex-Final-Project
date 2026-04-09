@@ -836,4 +836,5 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/Fractal.cpp.o: \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/span \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/span.h \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/fstream

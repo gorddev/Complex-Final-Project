@@ -48,8 +48,6 @@ vec4 burning_ship(vec2 pixel_coord) {
     }
 }
 
-
-// (Optional) Burning Ship Mandelbrot-style
 vec4 burning_ship_mandelbrot(vec2 frag) {
     vec2 z = vec2(0.0);
     vec2 c = frag;
@@ -88,10 +86,8 @@ void main() {
 
     iter_mod = 30.0 / float(uIterations);
 
-    // 🔥 Swap this line to switch fractals:
     color = burning_ship(pix);
 
-    // Optional hybrid like your Julia + Mandelbrot combo
     vec4 mandy = burning_ship_mandelbrot(pix);
     color.y += mandy.y * 0.5;
 }

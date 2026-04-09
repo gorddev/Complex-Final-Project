@@ -847,6 +847,7 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/FractalPanel.cpp.o: \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/span \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/span.h \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/../FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/../FractalInfo.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.hpp \
   /Users/gordie/Developer/SDL_API/core/types/vec.hpp \
   /Users/gordie/Developer/SDL_API/core/types/opengl/VBuffer.hpp \

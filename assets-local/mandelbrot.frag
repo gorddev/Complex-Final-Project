@@ -9,9 +9,11 @@ in vec3 vPos;
 
 uniform vec2 uResolution; // Resolution of the display
 uniform vec2 uMousePos;   // Position of the mouse (in pixels)
-uniform vec2 uStartPos;   // Starting position of the scan (in pixels)
+uniform vec2 uCenterPos;   // Starting position of the scan (in pixels)
+uniform vec4 uWindowDimensions; // Dimensions of the internal window.
 uniform int uIterations;  // How many iteration we will go through
 uniform float uScale;     // Current uScale of the scene.
+
 
 uniform int uColorCount;
 uniform vec3 uColors[MAX_COLORS];
@@ -46,6 +48,11 @@ float smooth_iter(int i, vec2 z) {
     return float(i) + 1.0 - nu;
 }
 
+// returns the final palette
+vec4 getPalette(int iterations, vec2 z) {
+    return vec4(palette(smooth_iter(iterations, z) / float(uIterations)), 1.0);
+}
+
 // ............................. //
 
 // gives the square of a complex number
@@ -56,14 +63,14 @@ vec2 complex_sqr(vec2 c1) {
     );
 }
 
-// turns a pixel position into a normalized position
-vec2 renormalize(vec2 pos) {
-    return (pos - 0.5* uResolution.xy)/(length(uResolution.xy));
-}
+vec2 toFractalSpace(vec2 fragCoord) {
+    // global normalized coords
+    vec2 uv = fragCoord / uResolution;
+    uv -= uWindowDimensions.xy;
+    vec2 p = uv - vec2(0.5);
+    p.x *= uResolution.x / uResolution.y;
 
-// turns a pixel position into a scaled normalized position.
-vec2 rescale(vec2 position) {
-    return uScale*(position - 0.5* uResolution.xy)/(length(uResolution.xy));
+    return uCenterPos + p * uScale;
 }
 
 // .................................... //
@@ -87,15 +94,11 @@ vec4 mandelbrot(vec2 frag) {
     if (length(z) < 2.0) {
         return vec4(0.0);
     } else {
-        float t = smooth_iter(i, z) / float(uIterations);
-        return vec4(palette(t), 1.0);
+        return getPalette(i, z);
     }
 }
 
-
 void main() {
-    vec2 sStartpos = renormalize(uStartPos);
-
-    vec2 pix = rescale(gl_FragCoord.xy) - sStartpos;
+    vec2 pix = toFractalSpace(gl_FragCoord.xy);
     color = mandelbrot(pix);
 }

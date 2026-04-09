@@ -13,7 +13,7 @@ namespace gan {
      *
      */
     class FractalPanel {
-        VBuffer<CVertex> borderVB;  ///< Vertex buffer that displays the border around the fractal.
+        VBuffer<CVertex> borderVB{};  ///< Vertex buffer that displays the border around the fractal.
         std::string panelID;        ///< ID of the panel, so there is not ImGui name-clashes.
         bool interactedThisFrame = false; ///< True if the panel was interacted with this frame.
         bool autoResize = false;
@@ -69,6 +69,9 @@ namespace gan {
         void imguiBegin(const Window& window);
         /** Displays the Main ImGui interface for each individual fractal */
         void imguiBody(const Window& window);
+
+        void displayProperty(size_t id) const;
+
         /** Ends the ImGui instance **/
         void imguiEnd();
 

@@ -846,6 +846,7 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/Fractal.cpp.o: CMakeFiles/Complex_Fin
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.cpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp \
   /Users/gordie/Developer/SDL_API/SDL_API.h \
   /Users/gordie/Developer/SDL_API/core/apidef.h \
   /Users/gordie/Developer/SDL_API/core/types/fstring.hpp \
@@ -1688,6 +1689,7 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/FractalExplorer.cpp.o: CMakeFiles/Com
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalPanel.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/ColorSelectorGUI.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/FractalCompilerGUI.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/FractalCursor.hpp \
@@ -2557,6 +2559,7 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/FractalPanel.cpp.o: CMakeFiles/Comple
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalPanel.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/ColorSelectorGUI.hpp \
   /Users/gordie/Developer/SDL_API/SDL_API.h \
   /Users/gordie/Developer/SDL_API/core/apidef.h \
@@ -3412,6 +3415,7 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/gui-classes/ColorSelectorGUI.cpp.o: C
   CMakeFiles/Complex_Final_Proj.dir/cmake_pch.hxx.cxx \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/ColorSelectorGUI.cpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/ColorSelectorGUI.hpp \
   /Users/gordie/Developer/SDL_API/SDL_API.h \
@@ -4263,6 +4267,7 @@ CMakeFiles/Complex_Final_Proj.dir/main.cpp.o: CMakeFiles/Complex_Final_Proj.dir/
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalPanel.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/Fractal.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/ColorSelectorGUI.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/FractalCompilerGUI.hpp \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/FractalCursor.hpp \
@@ -5214,6 +5219,8 @@ CMakeFiles/Complex_Final_Proj.dir/main.cpp.o: CMakeFiles/Complex_Final_Proj.dir/
 /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/fstream:
 
 /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/span.h:
+
+/Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalInfo.hpp:
 
 /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/FractalConstants.hpp:
 

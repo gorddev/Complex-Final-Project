@@ -10,6 +10,8 @@ namespace gan {
 
     struct FractalCompilerGUI {
         int currentCompilerWindowItem{};
+        bool failedLastCompilation = false;
+        std::string compilationFailureError;
 
         /** Returns an index of the fractal to compile back to the FractalExplorer if there is something to compile.
          * -1 if there is nothing to compile.*/
@@ -17,7 +19,7 @@ namespace gan {
             int ret = -1;
             ImGui::Begin("Compiler", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
 
-            ImGui::Combo("##Compile", &currentCompilerWindowItem, fractal::fractalNames, 4, fractal::totalFractalNum);
+            ImGui::Combo("##Compile", &currentCompilerWindowItem, fractal::fractalNames, fractal::totalFractalNum, 8);
             if (ImGui::Button("Compile")) {
                 ret = currentCompilerWindowItem;
             }
@@ -34,9 +36,27 @@ namespace gan {
             ImGui::SetWindowPos({0.f, window.getHeight() - ImGui::GetWindowSize().y});
 
             ImGui::Text("Window Size: %i %i", window.getWidth(), window.getHeight());
+
+            if (failedLastCompilation) {
+                ImGui::Text("Compilation Failed. Hover for error.");
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("%s", compilationFailureError.c_str());
+                }
+            }
+
             ImGui::End();
 
             return ret;
+        }
+
+        void reportCompileError() {
+            failedLastCompilation = true;
+            compilationFailureError = GAN_GetLog();
+            GAN_ClearLog();
+        }
+
+        void clearCompileError() {
+            failedLastCompilation = false;
         }
 
     };

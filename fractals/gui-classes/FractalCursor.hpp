@@ -14,18 +14,16 @@ namespace gan {
                     return i;
                 }
             }
-            return -1;
+            return fractal_id(-1);
         }
 
         void onMouseMotion(const Window& window, const Mouse& mouse, std::vector<FractalPanel>& panels) {
-
-
             const vec2 n_pos = window.normalizeToWindow(mouse.getPos());
             if (selectedFractal >= 0 && selectedFractal <= panels.size() && mouse.isLeftClicked()) {
                 panels[selectedFractal].moveFractal(
                     vec2{
-                        mouse.getDeltaPos().x*panels[selectedFractal].getScale(),
-                        -mouse.getDeltaPos().y*panels[selectedFractal].getScale()
+                        mouse.getDeltaPos().x*panels[selectedFractal].getScale()/window.getWidth() * static_cast<float>(window.getWidth())/window.getHeight(),
+                        -mouse.getDeltaPos().y*panels[selectedFractal].getScale()/window.getHeight()
                     }
                 );
                 selectionPos = panels[selectedFractal].normalizeToFractalPos(n_pos, window);
@@ -35,8 +33,8 @@ namespace gan {
                     if (mouse.isLeftClicked()) {
                         panels[selectedFractal].moveFractal(
                             vec2{
-                                mouse.getDeltaPos().x*panels[selectedFractal].getScale(),
-                                -mouse.getDeltaPos().y*panels[selectedFractal].getScale()
+                                mouse.getDeltaPos().x*panels[selectedFractal].getScale()/window.getWidth() * static_cast<float>(window.getWidth())/window.getHeight(),
+                                -mouse.getDeltaPos().y*panels[selectedFractal].getScale()/window.getHeight()
                             }
                         );
                     }
@@ -54,20 +52,9 @@ namespace gan {
                 auto& panel = panels[selectedFractal];
 
                 float oldScale = panel.getScale();
-
                 float zoomFactor = std::exp(mouse.getScrollWheelY() * -0.1f);
                 float newScale = oldScale * zoomFactor;
-
-                vec2 panelPos = panel.normalizeToPanelPos(nMousePos, window);
-
-                panelPos.y = 1.0f - panelPos.y;
-
-                vec2 start = panel.getStartPos();
-
-                vec2 newStart = start + panelPos * (oldScale - newScale) ;
-
                 panel.setScale(newScale);
-                panel.setStartPos(newStart);
 
                 selectionPos = panel.normalizeToFractalPos(nMousePos, window);
             }

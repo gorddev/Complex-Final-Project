@@ -845,4 +845,5 @@ CMakeFiles/Complex_Final_Proj.dir/fractals/gui-classes/ColorSelectorGUI.cpp.o: \
   /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/../Fractal.hpp \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/span \
   /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/span.h \
-  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/../FractalConstants.hpp
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/../FractalConstants.hpp \
+  /Users/gordie/Developer/C++\ Projects/Complex_Final_Proj/fractals/gui-classes/../FractalInfo.hpp
