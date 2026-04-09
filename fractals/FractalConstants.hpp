@@ -20,7 +20,7 @@ namespace gan::fractal {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // ~~~~~~~~~~~~~ Fractal Creation ~~~~~~~~~~~~~~~~
 
-    inline constexpr int totalFractalNum = 7;
+    inline constexpr int totalFractalNum = 6;
     inline constexpr FractalInfo fractalInfo[totalFractalNum] = {
         // Mandelbrot Set
         {"Mandelbrot", "mandelbrot.frag"},
@@ -37,8 +37,6 @@ namespace gan::fractal {
                 {"Multibrot Power {Float}", "uMultiPower", FLOAT, {1, 100}, UniformData(2.f)}}},
         // Burning Ship Fractal
         {"Burning Ship", "burn_ship.frag"},
-        // Popcorn Fractal
-        {"Popcorn", "popcorn.frag", {}, "popcorn.vert"}
     };
 
     inline constexpr const char* fractalNames[totalFractalNum] = {
@@ -47,8 +45,7 @@ namespace gan::fractal {
         fractalInfo[2].name,
         fractalInfo[3].name,
         fractalInfo[4].name,
-        fractalInfo[5].name,
-        fractalInfo[6].name,
+        fractalInfo[5].name
     };
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

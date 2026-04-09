@@ -11,13 +11,11 @@ namespace gan {
      *  Generates new fractals and handles the distribution of input to all fractals */
     class FractalExplorer {
     private:
-        std::vector<std::unique_ptr<Fractal>> cachedFractals; ///< All compiled but unused fractals.
         std::vector<FractalPanel> panels;               ///< All currently active views into fractals.
         FractalCompilerGUI compilerGUI;
         FractalCursor cursor;
 
-        void instantiateNewFractalPanel(fractal_id);            ///< Creates a new fractalView from the compile window.
-        std::vector<std::unique_ptr<Fractal>>::iterator locateCachedFractal(fractal_id);
+        void instantiateFractalPanel(fractal_id, bool newPanel);            ///< Creates a new fractalView from the compile window.
     public:
 
         /** Displays all fractals and all relevant GUI interfaces */

@@ -48,11 +48,17 @@ namespace gan {
             vec2 nMousePos = window.normalizeToWindow(mouse.getPos());
             selectedFractal = findHoveredFractal(nMousePos, panels);
 
+            #ifndef __EMSCRIPTEN__
+            constexpr float zoomAmount = -0.1f;
+            #else
+            constexpr float zoomAmount = -0.3f;
+            #endif
+
             if (selectedFractal != -1) {
                 auto& panel = panels[selectedFractal];
 
                 float oldScale = panel.getScale();
-                float zoomFactor = std::exp(mouse.getScrollWheelY() * -0.1f);
+                float zoomFactor = std::exp(mouse.getScrollWheelY() * zoomAmount);
                 float newScale = oldScale * zoomFactor;
                 panel.setScale(newScale);
 

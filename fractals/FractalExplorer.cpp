@@ -28,13 +28,16 @@ reset_display:
     for (auto it = panels.begin(); it != panels.end(); ++it) {
         it->imguiBegin(window);
 
-        bool remove = ImGui::Button("Remove Fractal View");
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.2f, 0.2f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.7f, 0.3f, 0.3f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
+        bool remove = ImGui::Button("Remove Fractal");
+        ImGui::PopStyleColor(3);
 
         it->imguiBody(window);
         it->imguiEnd();
 
         if (remove) {
-            cachedFractals.push_back(it->extract());
             panels.erase(it);
             reorganize(window);
             goto reset_display;
@@ -44,12 +47,14 @@ reset_display:
     }
 
     // First get what we need from the compiler GUI.
-    auto id = compilerGUI.display(window);
-    if (id >= 0 && id < fractal::totalFractalNum) {
-        instantiateNewFractalPanel(id);
+    auto result = compilerGUI.display(window, panels.size());
+    if (result == FractalCompilerGUI::NEW_FRACTAL_PANEL) {
+        instantiateFractalPanel(compilerGUI.currentFractalSelection, true);
+        reorganize(window);
+    } else if (result == FractalCompilerGUI::INPLACE_FRACTAL) {
+        instantiateFractalPanel(compilerGUI.currentFractalSelection, false);
         reorganize(window);
     }
-
 }
 
 void FractalExplorer::reorganize(const Window& window) {
@@ -85,47 +90,32 @@ void FractalExplorer::onMouseWheel(const Window& window, const Mouse& mouse) {
     cursor.onMouseWheel(window, mouse, panels);
 }
 
-void FractalExplorer::instantiateNewFractalPanel(fractal_id id) {
-    auto targetPanel = panels.size();
-
-    if (targetPanel >= fractal::maxFractalViews) {
-        // If we already have the max number of views on the screen, steal the
-        // existing fractal from the current view
-        targetPanel = fractal::maxFractalViews - 1;
-        if (auto ptr = panels[targetPanel].extract()) {
-            cachedFractals.push_back(std::move(ptr));
+void FractalExplorer::instantiateFractalPanel(const fractal_id id, bool newPanel) {
+    size_t targetPanel = panels.size();
+    if (newPanel || panels.empty()) {
+        if (targetPanel >= fractal::maxFractalViews) {
+            targetPanel = fractal::maxFractalViews - 1;
+        } else {
+            panels.emplace_back();
         }
-    } else {
-        // Otherwise just create a new fractalViewer
+    } else if (panels.empty()) {
         panels.emplace_back();
+    } else {
+        targetPanel--;
     }
 
-    auto it = locateCachedFractal(id);
-    if (it != cachedFractals.end()) {
-        panels[targetPanel].embed(std::move(*it));
-        cachedFractals.erase(it);
+    try {
+        auto unique = Fractal::make_unique(
+            fractal::fractalInfo[id]
+        );
+        panels[targetPanel].embed(std::move(unique));
         compilerGUI.clearCompileError();
-    } else {
-        try {
-            auto unique = Fractal::make_unique(
-                fractal::fractalInfo[id]
-            );
-            panels[targetPanel].embed(std::move(unique));
-            compilerGUI.clearCompileError();
-        } catch (...) {
-            compilerGUI.reportCompileError();
-            panels.pop_back();
-        }
+    } catch (...) {
+        compilerGUI.reportCompileError();
+        panels.pop_back();
     }
 
     if (!panels.empty()) {
         std::println("{}", panels.back().checkHealth());
     }
-}
-
-std::vector<std::unique_ptr<Fractal>>::iterator FractalExplorer::locateCachedFractal(fractal_id id) {
-    auto targetName = fractal::fractalInfo[id].name;
-    auto it = std::ranges::find_if(cachedFractals,
-        [&](const auto& f) { return f->name == targetName; });
-    return it;
 }
