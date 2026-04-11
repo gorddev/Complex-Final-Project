@@ -58,13 +58,14 @@ namespace gan {
         const char* const name;
         const char* const fragShader;
         const char* const vertShader;
+        const char* const description;
 
         fractal::Uniform extraUniforms[fractal::maxExtraUniforms];
         const uint32_t numExtraUniforms;
 
-        constexpr FractalInfo(const char name[], const char fragShader[],
+        constexpr FractalInfo(const char name[], const char fragShader[], const char desc[] = "",
             const std::initializer_list<fractal::Uniform> additionalUniforms = {}, const char vertShader[] = "std.vert")
-            : name(name), fragShader(fragShader), vertShader(vertShader), extraUniforms{},
+            : name(name), fragShader(fragShader), vertShader(vertShader), extraUniforms{}, description(desc),
               numExtraUniforms(std::min(additionalUniforms.size(), fractal::maxExtraUniforms)) {
             int count = 0;
             for (auto& uniform : additionalUniforms) {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.0)
-project(Complex_Final_Proj)
+project(Fractal_Visualizer)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -10,7 +10,7 @@ endif()
 
 add_subdirectory("/Users/gordie/Developer/SDL_API" SDL_API)
 
-add_executable(Complex_Final_Proj
+add_executable(Fractal
     main.cpp
     src/fractals/Fractal.hpp
     src/fractals/Fractal.cpp
@@ -19,14 +19,21 @@ add_executable(Complex_Final_Proj
     src/FractalExplorer.cpp
 )
 
-target_link_libraries(Complex_Final_Proj PRIVATE
+target_link_libraries(Fractal PRIVATE
     SDL_API
     SDL3
 )
 
-target_compile_options(Complex_Final_Proj PRIVATE
-    -O3
-)
+#[[
+target_compile_options(Fractal PRIVATE
+    -Oz
+)#]]
+
+#[[
+target_link_options(Fractal PRIVATE
+    -fsanitize=address
+    -fsanitize=undefined
+)#]]
 
 if(EMSCRIPTEN)
     add_subdirectory("cmakelists/emscripten")

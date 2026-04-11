@@ -31,26 +31,27 @@ EM_BOOL on_browser_resize(int eventType, const EmscriptenUiEvent *uiEvent, void 
 }
 #endif
 
-SDL_AppResult SDL_AppInit(void** userdata, int argc, char** argv) {
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
+    // First, we create the window through which we view the program.
     win = gan::Window::make("Fractal Visualizer", {800, 800}
     #ifndef __EMSCRIPTEN__
-    , gan::WindowHighDPI
+    , gan::WindowHighDPI //, If we aren't on the web, use highDPI display.
     #endif
     );
     win.setResizable(true);
 
+    // Set the assets folder we will use for our shaders.
     gan::files::set_assets_folder("shaders");
 
-    int x, y;;
-    SDL_GetWindowSizeInPixels(win, &x, &y);
-
-
+    // create an imgui context with custom wrappers.
     imgui_context = gan::imgui::create_context(win);
 
+    // add the font we'll use in the web browser.
     ImGui::GetIO().Fonts->AddFontFromFileTTF(
         (gan::files::assets()/"JetbrainsMono.ttf").c_str(),
-                16.f);
+                18.f);
 
+    // If on the web, set a callback for browser window resizing.
     #ifdef __EMSCRIPTEN__
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, win, EM_FALSE, on_browser_resize);
     on_browser_resize(0, nullptr, nullptr);
@@ -59,16 +60,17 @@ SDL_AppResult SDL_AppInit(void** userdata, int argc, char** argv) {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppIterate(void* userdata) {
+SDL_AppResult SDL_AppIterate(void* appstate) {
+    // Clear the screen ach frame.
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Start new imgui frame.
     gan::imgui::new_frame(imgui_context);
-    ImGui::SetCurrentContext(imgui_context);
 
     glViewport(0, 0, win.getWidth()*win.getDPIScale(), win.getHeight()*win.getDPIScale());
 
+    // Display the fractals & GUI
     explorer.display(win, mouse.getPos());
-
     gan::imgui::render(imgui_context);
 
     SDL_GL_SwapWindow(win);
@@ -76,7 +78,7 @@ SDL_AppResult SDL_AppIterate(void* userdata) {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void* userdata, SDL_Event* event) {
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     SDL_Event& e = *event;
 
     switch (e.type) {
@@ -110,6 +112,6 @@ SDL_AppResult SDL_AppEvent(void* userdata, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void* userdata, SDL_AppResult result) {
+void SDL_AppQuit([[maybe_unused]] void* appstate, SDL_AppResult result) {
     gan::imgui::shutdown(imgui_context);
 }

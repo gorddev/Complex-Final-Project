@@ -12,7 +12,6 @@ namespace gan {
         // ~~~~~~~~~ Positioning ~~~~~~~~~~
         vec2 windowPos{};     ///< Where the fractal is positioned in the window. {0.0 to 1.0}
         vec2 windowSize{};    ///< The size of fractal within the window {0.0 to 1.0}
-        vec2 pixelPos{};      ///< The positon of the fractal in the window in pixels.
         vec2 centerPos;       ///< Starting position where the fractal starts drawing.
         float scale;          ///< How far zoomed in we are. {0.0001 to 5.0}
         /** Extra uniforms for fractals apart from the pre-provided ones */
@@ -25,6 +24,7 @@ namespace gan {
         int numColors = fractal::defaultNumColors;
         // ~~~~~~~~~~~ Name ~~~~~~~~~~~~~~~
         const std::string name;
+        const std::string description;
         std::string healthStr;
 
         /** Creates a fractal object from the provided shaders.
@@ -85,7 +85,7 @@ namespace gan {
                 uColorCount,
                 uColors;
         // Extra uniform handles.
-        GLint uProperties[fractal::maxExtraUniforms];
+        GLint uProperties[fractal::maxExtraUniforms]{};
         // Secret smoothed uniform data.
         fractal::UniformData smoothProperties[fractal::maxExtraUniforms]{};
         // vertex buffer making up the vao
@@ -95,7 +95,7 @@ namespace gan {
         Fractal(GLint uResolution, GLint uMousePos, GLint uIterations, GLint uScale,
                 GLint uCenterPos, GLint uWindowPos, GLint uColorCount, GLint uColors,
                 GLuint vao, GLuint vbo, GLuint shader, std::string name,
-                fractal::Uniform extraUniforms[], size_t numExtraUniforms);
+                fractal::Uniform extraUniforms[], size_t numExtraUniforms, const char description[]);
 
         /** Draws the fractal with the window & current mouse position **/
         void draw(const Window& window) const;

@@ -8,10 +8,11 @@ void FractalExplorer::display(const Window& window, vec2 mousePos) {
     // Now we go through each of our view
 
     cursor.tick(compilerGUI.freezeCursor);
+
     if (cursor.selectedFractal != -1) {
 
         ImGui::SetNextWindowPos(ImVec2(mousePos.x + 5, mousePos.y - 30));
-        
+
         ImGui::Begin("OverlayWindow", nullptr,
                     ImGuiWindowFlags_NoTitleBar |
                     ImGuiWindowFlags_NoResize |
@@ -120,9 +121,5 @@ void FractalExplorer::instantiateFractalPanel(const fractal_id id, bool newPanel
     } else {
         compilerGUI.reportCompileError();
         panels.pop_back();
-    }
-
-    if (!panels.empty()) {
-        std::println("{}", panels.back().checkHealth());
     }
 }

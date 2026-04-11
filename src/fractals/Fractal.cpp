@@ -9,29 +9,32 @@
 gan::Fractal::Fractal(const GLint uResolution, const GLint uMousePos, const GLint uIterations, const GLint uScale,
                 const GLint uCenterPos, const GLint uWindowPos, const GLint uColorCount, const GLint uColors,
                 const GLuint vao, const GLuint vbo, const GLuint shader, std::string name,
-                fractal::Uniform extraUniforms[], const size_t numExtraUniforms)
+                fractal::Uniform extraUniforms[], const size_t numExtraUniforms, const char description[])
         :   centerPos({0,0}),
             scale(fractal::defaultScale),
             properties{},
             numProperties(numExtraUniforms),
             iterations(50),
             name(std::move(name)),
-            uResolution(uResolution),
-            uMousePos(uMousePos), uIterations(uIterations), uScale(uScale),
-            uCenterPos(uCenterPos),
-            uWindowDimensions(uWindowPos), uColorCount(uColorCount), uColors(uColors),
-            vao(vao),
-            vbo(vbo), shader(shader)
+            description(description),
+            uResolution(uResolution), uMousePos(uMousePos), uIterations(uIterations),
+            uScale(uScale),
+            uCenterPos(uCenterPos), uWindowDimensions(uWindowPos), uColorCount(uColorCount),
+            uColors(uColors),
+            vao(vao), vbo(vbo),
+            shader(shader)
 {
     uNumColors1i();
     uColors3fv();
-    healthStr = checkHealth();
+
     // Get all extra uniforms into the fractal.
     for (int i = 0; i < std::min(numExtraUniforms, fractal::maxExtraUniforms); i++) {
         properties[i] = extraUniforms[i];
         uProperties[i] = glGetUniformLocation(shader, extraUniforms[i].shaderHandle);
         uProperty(i);
     }
+
+    healthStr = checkHealth();
 }
 
 // --------------------------------------------------------- //
@@ -100,7 +103,8 @@ std::optional<gan::Fractal> gan::Fractal::make(FractalInfo info) {
         glGetUniformLocation(program, "uColors"),
         vao, vbo, program,
         info.name,
-        info.extraUniforms, info.numExtraUniforms
+        info.extraUniforms, info.numExtraUniforms,
+        info.description
     };
 }
 
@@ -124,7 +128,8 @@ std::optional<std::unique_ptr<gan::Fractal>> gan::Fractal::make_unique(FractalIn
         glGetUniformLocation(program, "uColors"),
         vao, vbo, program,
         info.name,
-        info.extraUniforms, info.numExtraUniforms
+        info.extraUniforms, info.numExtraUniforms,
+        info.description
     });
 }
 
@@ -146,15 +151,26 @@ void gan::Fractal::tick() {
 
 std::string gan::Fractal::checkHealth() const {
     std::string health;
+    std::string unhealthy;
+
+    auto vtstr = [](const vec2& v) {
+        return std::string("{") + std::to_string(v.x) + ", " + std::to_string(v.y) + "}";
+    };
 
     health += "====== Fractal Health =======\n"
             "Name       = " + name + "\n"
-            "--------- Uniforms ----------\n";
-    bool healthy = true;
-    auto health_check = [&health, &healthy](const GLint uniform, const char name[]) {
+            "WinPos     = " + vtstr(windowPos) + "\n"
+            "WinSize    = " + vtstr(windowSize) + "\n"
+            "CenterPos  = " + vtstr(centerPos) + "\n"
+            "Scale      = " + std::to_string(scale) + "\n"
+            "NumProps   = " + std::to_string(numProperties) + "\n" +
+            std::format("vao, vbo, shd -> {{{}, {}, {}}}\n", vao, vbo, shader) +
+            "\n--------- Uniforms ----------\n";
+    auto health_check = [&health, &unhealthy](const GLint uniform, const char name[]) {
         if (uniform < 0) {
-            health += std::format("!! Uniform \'{}\' not found.\n", name);
-            healthy = false;
+            unhealthy += std::format("!! Uniform \'{}\' not found.\n", name);
+        } else {
+            health += std::format(":: Uniform \'{}\' found @ {}\n", name, uniform);
         }
     };
     health_check(uResolution, "uResolution");
@@ -162,13 +178,46 @@ std::string gan::Fractal::checkHealth() const {
     health_check(uIterations, "uIterations");
     health_check(uScale, "uScale");
     health_check(uCenterPos, "uCenterPos");
+    health_check(uWindowDimensions, "uCenterPos");
+    health_check(uColorCount, "uColors");
+    health_check(uColors, "uColors");
 
     for (size_t i = 0; i < numProperties; ++i) {
         health_check(uProperties[i], properties[i].shaderHandle);
     }
 
-    if (healthy) {
+    if (unhealthy.empty()) {
         health += "All uniforms found.\n";
+    } else {
+        health += "\n--------- Warnings ----------\n";
+        health += unhealthy;
+    }
+
+    auto v4tstr = [](const fractal::UniformData& v) {
+        return std::string("{") + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
+        + std::to_string(v.z) + ", " + std::to_string(v.w) + "}";
+    };
+
+    auto iv4tstr = [](const fractal::UniformData& v) {
+        return std::string("{") + std::to_string(v.ix) + ", " + std::to_string(v.iy) + ", "
+        + std::to_string(v.iz) + ", " + std::to_string(v.iw) + "}";
+    };
+
+    if (numProperties > 0)
+        health += "\n~ Additional Property Info ~\n";
+    for (size_t i = 0; i < numProperties; ++i) {
+        if (properties[i].type <= fractal::VEC4) {
+            health += std::format("Prop Name: {}\n"
+                                     ":: Exact:  {}\n"
+                                     ":: Smooth: {}", properties[i].propertyName,
+                                     v4tstr(properties[i].data),
+                                     v4tstr(smoothProperties[i]));
+        } else {
+            health += std::format("Prop Name: {}\n"
+                                     ":: Value:  {}\n",
+                                     properties[i].propertyName,
+                                     iv4tstr(properties[i].data));
+        }
     }
 
     return health;
@@ -337,8 +386,6 @@ void gan::Fractal::reframe(const Window& window)  {
 
     vec2 pos  = windowPos;
     vec2 size = windowSize;
-    pixelPos  = {pos.x * window.getWidth(), pos.y * window.getHeight()};
-
     pos.x -= 0.5;
     pos.x *= 2;
     pos.y = 1 - pos.y;

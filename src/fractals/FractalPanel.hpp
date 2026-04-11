@@ -45,14 +45,20 @@ namespace gan {
         void reframe(const Window& window);
         /** Moves the starting position of the fractal by the delta (delta should be normalized 0.0 to 1.0)*/
         void moveFractal(vec2 delta) const;
+
         /** Gets the current scale of the fractal **/
-        float getScale();
-        /** Sets the scale of the fractal **/
-        void setScale(float scale);
+        [[nodiscard]] float getScale() const;
         /** Gets the start position **/
-        vec2 getStartPos() const;
+        [[nodiscard]] vec2 getCenterPos() const;
+        /** Gets the position of the window in normalized coords (0.0 to 1.0) */
+        [[nodiscard]] vec2 getWindowPos() const;
+        /** Gets the window dimensions */
+        [[nodiscard]] vec2 getWindowDimensions() const;
+        /** Sets the scale of the fractal **/
+        void setScale(float scale) const;
+
         /** Sets the starting position */
-        void setStartPos(vec2 startPos);
+        void setCenterPos(vec2 startPos) const;
 
         /** Imbues a fractal in the window panel while taking ownership of the provided fractal.
          * @param fractal The fractal this panel will take ownership of.
@@ -79,11 +85,9 @@ namespace gan {
         /** Returns a string detailing the health of the Fractal Panel **/
         std::string checkHealth();
         /** Checks whether the given normalized position is contained within the window **/
-        bool containedWithin(vec2 pos) const;
-
-        gan::vec2 normalizeToPanelPos(vec2 pos, const Window& window);
+        [[nodiscard]] bool containedWithin(vec2 pos) const;
 
         /** Return the position in fractal coordinates. Input should be from (0.0 to 1.0) */
-        vec2 normalizeToFractalPos(vec2 pos, const Window& window) const;
+        [[nodiscard]] vec2 normalizeToFractalPos(vec2 pos, const Window& window) const;
     };
 }

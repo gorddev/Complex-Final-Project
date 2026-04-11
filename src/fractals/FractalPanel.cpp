@@ -64,7 +64,7 @@ void gan::FractalPanel::genBorder(const Window& window, vec2 pos, vec2 size, vec
         VBuffer<CVertex>::destroy(borderVB);
     }
 
-    borderVB = VBuffer<CVertex>::make(borderVertices, 24);
+    borderVB = std::move(VBuffer<CVertex>::make(borderVertices, 24));
 }
 
 gan::FractalPanel::FractalPanel(std::unique_ptr<gan::Fractal> fractal)
@@ -116,12 +116,31 @@ void gan::FractalPanel::imguiBody(const Window& window) {
 
         // ~~~~~~ Window Positioning ~~~~~~~
         ImGui::SameLine();
-        if (ImGui::Button("Home")) {
+        ImGui::PushStyleColor(ImGuiCol_Button, {0.4, 0.4, 0.2, 1.f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5, 0.6, 0.3, 1.f});
+        if (ImGui::Button("Recenter")) { // HOME button
             frac->scale = fractal::defaultScale;
             frac->centerPos = {0.0, 0.0};
             frac->uScale1f();
             frac->uCenterPos2f();
         }
+        ImGui::PopStyleColor(2);
+
+
+
+        // -- Description --
+        if (!frac->description.empty()) {
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Button, {0.3, 0.3, 0.3, 1.f});
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5, 0.5, 0.5, 1.f});
+            ImGui::Button("Description");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", frac->description.c_str());
+            }
+            ImGui::PopStyleColor(2);
+        }
+
+
         ImGui::Separator(); //—————————————————
         if (ImGui::SliderFloat("Scale", &frac->scale, 0.000001, 100.0, "%.6f", ImGuiSliderFlags_Logarithmic)) {
             frac->uIterations1i();
@@ -144,11 +163,14 @@ void gan::FractalPanel::imguiBody(const Window& window) {
         // ---- Colors -----
         color_selector.display(frac);
 
+
         // ---- Debug ----
         ImGui::Text("> DEBUG");
         if (ImGui::IsItemHovered()) {
+            if (frac->healthStr.empty())
+                frac->healthStr = frac->checkHealth();
             ImGui::SetTooltip("%s", frac->healthStr.c_str());
-        }
+        } else frac->healthStr.clear();
 
         imguiWindowSize = window.normalizeToWindow({ImGui::GetWindowSize().x, ImGui::GetWindowSize().y});
     }
@@ -277,11 +299,6 @@ bool gan::FractalPanel::containedWithin(vec2 pos) const {
     return false;
 }
 
-gan::vec2 gan::FractalPanel::normalizeToPanelPos(vec2 pos, const Window& window) {
-    return {(pos.x-frac->pixelPos.x/2)/window.getWidth(), (pos.y-frac->pixelPos.y/2)/window.getHeight()};
-
-}
-
 gan::vec2 gan::FractalPanel::normalizeToFractalPos(vec2 pos, const Window& window) const {
     pos.y = 1 - pos.y;
     pos -= frac->windowPos;
@@ -317,20 +334,34 @@ void gan::FractalPanel::moveFractal(const vec2 delta) const {
     }
 }
 
-float gan::FractalPanel::getScale() {
+float gan::FractalPanel::getScale() const {
+    if (frac == nullptr) return 0.f;
     return frac->scale;
 }
 
-void gan::FractalPanel::setScale(float scale) {
+void gan::FractalPanel::setScale(const float scale) const {
+    if (frac == nullptr) return;
     frac->scale = scale;
     frac->uScale1f();
 }
 
-gan::vec2 gan::FractalPanel::getStartPos() const {
+gan::vec2 gan::FractalPanel::getCenterPos() const {
+    if (frac == nullptr) return {0.f, 0.f};
     return frac->centerPos;
 }
 
-void gan::FractalPanel::setStartPos(vec2 startPos) {
+gan::vec2 gan::FractalPanel::getWindowPos() const {
+    if (frac == nullptr) return {0.f, 0.f};
+    return frac->windowPos;
+}
+
+gan::vec2 gan::FractalPanel::getWindowDimensions() const {
+    if (frac == nullptr) return vec2{0.f, 0.f};
+    return frac->windowSize;
+}
+
+void gan::FractalPanel::setCenterPos(vec2 startPos) const {
+    if (frac == nullptr) return;
     frac->centerPos = startPos;
     frac->uCenterPos2f();
 }
