@@ -38,9 +38,12 @@ namespace gan {
         struct Uniform {
             UniformData data{};
             UniformBounds bounds{};
+
             const char* propertyName{};
             const char* shaderHandle{};
+
             float smoothing = 0.05f;
+
             UniformType type{};
 
             constexpr Uniform() = default;

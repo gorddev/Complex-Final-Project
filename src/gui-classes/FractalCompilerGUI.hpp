@@ -56,7 +56,7 @@ namespace gan {
 
             ImGui::SetWindowPos({0.f, window.getHeight() - ImGui::GetWindowSize().y});
 
-            ImGui::Text("Window Size: %i %i", window.getWidth(), window.getHeight());
+            ImGui::Text("Window Size: %i %i", window.getWindowPixelSize().x, window.getWindowPixelSize().y);
 
             if (failedLastCompilation) {
                 ImGui::Text("Compilation Failed. Hover for error.");

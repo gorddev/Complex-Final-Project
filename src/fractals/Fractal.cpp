@@ -5,6 +5,7 @@
 
 #include "FractalInfo.hpp"
 
+
 gan::Fractal::Fractal(const GLint uResolution, const GLint uMousePos, const GLint uIterations, const GLint uScale,
                 const GLint uCenterPos, const GLint uWindowPos, const GLint uColorCount, const GLint uColors,
                 const GLuint vao, const GLuint vbo, const GLuint shader, std::string name,

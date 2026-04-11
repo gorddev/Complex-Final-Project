@@ -8,7 +8,6 @@ namespace gan {
         int selectedFractal = -1;
         vec2 selectionPos{};
 
-
         static fractal_id findHoveredFractal(vec2 nMousePos, std::vector<FractalPanel>& panels) {
             for (fractal_id i = 0; i < panels.size(); ++i) {
                 if (panels[i].containedWithin(nMousePos)) {
@@ -17,8 +16,6 @@ namespace gan {
             }
             return fractal_id(-1);
         }
-
-
 
         void onMouseMotion(const Window& window, const Mouse& mouse, std::vector<FractalPanel>& panels) {
             const vec2 n_pos = window.normalizeToWindow(mouse.getPos());

@@ -11,6 +11,7 @@
 
 gan::Window win;
 gan::Mouse mouse;
+
 gan::FractalExplorer explorer;
 ImGuiContext* imgui_context;
 
@@ -31,15 +32,17 @@ EM_BOOL on_browser_resize(int eventType, const EmscriptenUiEvent *uiEvent, void 
 #endif
 
 SDL_AppResult SDL_AppInit(void** userdata, int argc, char** argv) {
-    win = gan::Window::make("Fractal Visualizer", {800, 800});
+    win = gan::Window::make("Fractal Visualizer", {800, 800}
+    #ifndef __EMSCRIPTEN__
+    , gan::WindowHighDPI
+    #endif
+    );
     win.setResizable(true);
+
     gan::files::set_assets_folder("shaders");
 
-    int x, y;
+    int x, y;;
     SDL_GetWindowSizeInPixels(win, &x, &y);
-
-    std::println("Pixel density: {}", SDL_GetWindowPixelDensity(win));
-    std::println("Display scale: {} ", SDL_GetWindowDisplayScale(win));
 
 
     imgui_context = gan::imgui::create_context(win);
@@ -62,7 +65,7 @@ SDL_AppResult SDL_AppIterate(void* userdata) {
     gan::imgui::new_frame(imgui_context);
     ImGui::SetCurrentContext(imgui_context);
 
-    glViewport(0, 0, win.getWidth()*2, win.getHeight()*2);
+    glViewport(0, 0, win.getWidth()*win.getDPIScale(), win.getHeight()*win.getDPIScale());
 
     explorer.display(win, mouse.getPos());
 

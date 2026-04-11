@@ -1,5 +1,5 @@
 #version 410 core
-precision highp float;
+precision lowp float;
 
 #define MAX_COLORS 8
 
@@ -84,13 +84,16 @@ vec4 mandelbrot(vec2 frag) {
 
     int i;
     for(i = 0; i < uIterations; i++) {
-        z = complex_sqr(z) + c;
-        if (length(z) >= 2.0) {
+        float x2 = z.x * z.x;
+        float y2 = z.y * z.y;
+        z.y = 2.0 * z.x * z.y + c.y;
+        z.x = x2 - y2 + c.x;
+        if (dot(z, z) >= 4.0) {
             break;
         }
     }
 
-    if (length(z) < 2.0) {
+    if (dot(z, z) < 4.0) {
         return vec4(0.0);
     } else {
         return getPalette(i, z);

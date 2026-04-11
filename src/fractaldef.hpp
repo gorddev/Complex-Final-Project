@@ -43,7 +43,7 @@ namespace gan::fractal {
 
         // Lambda Fractal
         {"Lambda Exp[z]", "lambda.frag", {
-            {"Lambda (x + yi)", "uLambda", VEC2, {-1.f, 1.f}, UniformData(0.803f, 0.189f), 0.025f}}},
+            {"Lambda (x + yi)", "uLambda", VEC2, {0.f, 1.f}, UniformData(0.803f, 0.189f), 0.025f}}},
 
         // multibrot (integer)
         {"Multibrot {Integer}", "multibrot_int.frag", {

@@ -1,5 +1,5 @@
 #version 410 core
-precision highp float;
+precision lowp float;
 
 #define MAX_COLORS 8
 #define MULTI_SAMPLE(func, output) \
@@ -93,7 +93,10 @@ vec4 julia(vec2 pixel_coord) {
 
     int i;
     for(i = 0; i < uIterations; i++) {
-        z = complex_sqr(z) + c;
+        float x2 = z.x * z.x;
+        float y2 = z.y * z.y;
+        z.y = 2.0 * z.x * z.y + c.y;
+        z.x = x2 - y2 + c.x;
         if (dot(z, z) > 4.0) {
             break;
         }
@@ -121,5 +124,4 @@ vec3 draw_mouse_circle(vec2 pixel_coord, float radius) {
 void main() {
     vec2 pix = toFractalSpace(gl_FragCoord.xy);
     color = julia(pix) + vec4(draw_mouse_circle(pix, 0.004),1.0);
-    MULTI_SAMPLE(julia, color);
 }
