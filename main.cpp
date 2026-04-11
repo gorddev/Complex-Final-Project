@@ -1,8 +1,8 @@
 #include <iostream>
 
 #include "SDL_API.h"
-#include "fractals/FractalExplorer.hpp"
-#include "fractals/FractalPanel.hpp"
+#include "src/FractalExplorer.hpp"
+#include "src/fractals/FractalPanel.hpp"
 #include "imgui-integration/Imgui_Init.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS 1
@@ -31,9 +31,16 @@ EM_BOOL on_browser_resize(int eventType, const EmscriptenUiEvent *uiEvent, void 
 #endif
 
 SDL_AppResult SDL_AppInit(void** userdata, int argc, char** argv) {
-    win = gan::Window::make("win", {800, 800});
+    win = gan::Window::make("Fractal Visualizer", {800, 800});
     win.setResizable(true);
-    gan::files::set_assets_folder("assets-local");
+    gan::files::set_assets_folder("shaders");
+
+    int x, y;
+    SDL_GetWindowSizeInPixels(win, &x, &y);
+
+    std::println("Pixel density: {}", SDL_GetWindowPixelDensity(win));
+    std::println("Display scale: {} ", SDL_GetWindowDisplayScale(win));
+
 
     imgui_context = gan::imgui::create_context(win);
 
@@ -55,7 +62,7 @@ SDL_AppResult SDL_AppIterate(void* userdata) {
     gan::imgui::new_frame(imgui_context);
     ImGui::SetCurrentContext(imgui_context);
 
-    glViewport(0, 0, win.getWidth(), win.getHeight());
+    glViewport(0, 0, win.getWidth()*2, win.getHeight()*2);
 
     explorer.display(win, mouse.getPos());
 
@@ -87,6 +94,12 @@ SDL_AppResult SDL_AppEvent(void* userdata, SDL_Event* event) {
     case SDL_EVENT_WINDOW_RESIZED:
         win.on_SDLWindowEvent(e);
         explorer.reorganize(win);
+        break;
+    case SDL_EVENT_KEY_DOWN:
+        if (e.key.scancode == SDL_SCANCODE_RETURN) {
+            explorer.toggleCursorFreeze();
+        }
+    default:
         break;
     }
     ImGui_ImplSDL3_ProcessEvent(&e);

@@ -1,1 +1,0 @@
- SDL_API/libSDL_API.a -lSDL3 SDL_API/libImGui.a -sUSE_SDL=3 SDL_API/libGLAD.a 
