@@ -1,6 +1,6 @@
 
 
-target_link_options(Fractal PRIVATE
+target_link_options(Fractal_Visualizer PRIVATE
     -Werror
     -Wall
     -Oz
@@ -12,8 +12,9 @@ target_link_options(Fractal PRIVATE
     "-sUSE_WEBGL2=1"
     "--preload-file=shaders"
     "--emrun"
-    "-sMAXIMUM_MEMORY=512MB"
-    "-sALLOW_MEMORY_GROWTH"
+    "-pthread"
+    "-Wno-experimental"
+
     #"-sDISABLE_EXCEPTION_CATCHING=1"
     #"-sGL_ASSERTIONS=1"
     #"-sGL_DEBUG=1"

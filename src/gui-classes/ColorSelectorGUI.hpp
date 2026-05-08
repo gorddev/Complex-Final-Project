@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "../fractals/Fractal.hpp"
+#include "../gpu-fractals/GPUFractal.hpp"
 
 /* Created by Gordie Novak on 4/7/26.
  * Purpose: 
@@ -10,12 +10,12 @@
 namespace gan {
 
     struct ColorSelectorGUI {
-        unsigned int currentColor{}; ///< Current color selected.
+        int currentColor{}; ///< Current color selected.
 
         ColorSelectorGUI() = default;
 
         /// Displays the color selector.
-        void display(std::unique_ptr<Fractal>& fractal);
+        void display(std::unique_ptr<GPUFractal>& fractal);
 
     };
 }

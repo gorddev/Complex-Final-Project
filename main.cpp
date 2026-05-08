@@ -1,9 +1,5 @@
-#include <iostream>
+#include <FractalExplorer.hpp>
 
-#include "SDL_API.h"
-#include "src/FractalExplorer.hpp"
-#include "src/fractals/FractalPanel.hpp"
-#include "imgui-integration/Imgui_Init.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
@@ -19,7 +15,7 @@ ImGuiContext* imgui_context;
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
-EM_BOOL on_browser_resize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData) {
+EM_BOOL on_browser_resize([[maybe_unused]] int eventType, [[maybe_unused]] const EmscriptenUiEvent *uiEvent,[[maybe_unused]] void *userData) {
     double w, h;
     // Get the new CSS size of the browser window/container
     emscripten_get_element_css_size("canvas", &w, &h);
@@ -31,36 +27,37 @@ EM_BOOL on_browser_resize(int eventType, const EmscriptenUiEvent *uiEvent, void 
 }
 #endif
 
-SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
+SDL_AppResult SDL_AppInit(void**, int, [[maybe_unused]] char* argv[]) {
     // First, we create the window through which we view the program.
     win = gan::Window::make("Fractal Visualizer", {800, 800}
-    #ifndef __EMSCRIPTEN__
-    , gan::WindowHighDPI //, If we aren't on the web, use highDPI display.
+    #ifndef MY_FUN_VAR
+    , gan::WindowHighDPI | gan::WindowFloatOnTop //, If we aren't on the web, use highDPI display.
     #endif
     );
     win.setResizable(true);
+    win.setGLClearColor({0, 0, 0, 255});
 
+    // If on the web, set a callback for browser window resizin.
+    #ifndef __EMSCRIPTEN__
+    gan::files::initialize_filesystem(argv[0]);
+    #else
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, win, EM_FALSE, on_browser_resize);
+    on_browser_resize(0, nullptr, nullptr);
     // Set the assets folder we will use for our shaders.
+    #endif
     gan::files::set_assets_folder("shaders");
 
     // create an imgui context with custom wrappers.
     imgui_context = gan::imgui::create_context(win);
-
     // add the font we'll use in the web browser.
     ImGui::GetIO().Fonts->AddFontFromFileTTF(
         (gan::files::assets()/"JetbrainsMono.ttf").c_str(),
                 18.f);
 
-    // If on the web, set a callback for browser window resizing.
-    #ifdef __EMSCRIPTEN__
-    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, win, EM_FALSE, on_browser_resize);
-    on_browser_resize(0, nullptr, nullptr);
-    #endif
-
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppIterate(void* appstate) {
+SDL_AppResult SDL_AppIterate(void*) {
     // Clear the screen ach frame.
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -78,7 +75,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
+SDL_AppResult SDL_AppEvent(void*, SDL_Event* event) {
     SDL_Event& e = *event;
 
     switch (e.type) {
@@ -96,6 +93,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
         mouse.updateWithSDL();
         explorer.onMouseMotion(win, mouse);
         break;
+    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
     case SDL_EVENT_WINDOW_RESIZED:
         win.on_SDLWindowEvent(e);
         explorer.reorganize(win);
@@ -112,6 +110,6 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit([[maybe_unused]] void* appstate, SDL_AppResult result) {
+void SDL_AppQuit([[maybe_unused]] void* appstate, [[maybe_unused]] SDL_AppResult result) {
     gan::imgui::shutdown(imgui_context);
 }

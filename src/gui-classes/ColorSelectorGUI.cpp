@@ -2,16 +2,16 @@
 
 using namespace gan;
 
-void ColorSelectorGUI::display(std::unique_ptr<Fractal>& fractal) {
+void ColorSelectorGUI::display(std::unique_ptr<GPUFractal>& fractal) {
     if (ImGui::CollapsingHeader("Colors")) {
-        if (ImGui::SliderInt("Num Colors: ", &fractal->numColors, fractal::min_colors, fractal::max_colors)) {
+        if (ImGui::SliderInt("Num Colors: ", &fractal->numColors, gpu_fractal::min_colors, gpu_fractal::max_colors)) {
             fractal->uNumColors1i();
             if (currentColor >= fractal->numColors) {
                 currentColor = fractal->numColors - 1;
             }
         }
         ImGui::Separator();
-        for (size_t i = 0; i < fractal->numColors; ++i) {
+        for (int i = 0; i < fractal->numColors; ++i) {
             auto j = fractal->numColors - i - 1;
             ImGui::PushStyleColor(ImGuiCol_Button, {fractal->colors[j].r, fractal->colors[j].g, fractal->colors[j].b, 0.7f});
             bool pop_style = currentColor == i;

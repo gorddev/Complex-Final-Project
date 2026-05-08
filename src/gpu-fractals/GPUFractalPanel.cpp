@@ -1,19 +1,18 @@
-#include "./FractalPanel.hpp"
+#include "./GPUFractalPanel.hpp"
+#include <print>
 
-#include "../fractaldef.hpp"
-#include "imgui-integration/Imgui_Init.hpp"
+#include "gpu_fractaldef.hpp"
 
-constexpr float bsize = 0.01;
 constexpr float thickness = 0.005f;
 
-void gan::FractalPanel::genBorder(const Window& window, vec2 pos, vec2 size, vec4 color, const float thickness = 0.01) {
-    const float cx     = (pos.x - 0.5f + size.w/2)*2;
-    const float cy     = -(pos.y - 0.5f + size.h/2)*2;
-    const float w      = (size.w)*2;
-    const float h      = (size.h)*2;
+void gan::GPUFractalPanel::genBorder(const Window& window, vec2 pos, vec2 size, vec4 color, const float thickness) {
+    const float cx     = (pos.x - 0.5f + size.w / 2.0f) * 2.0f;
+    const float cy     = (0.5f - pos.y - size.h / 2.0f) * 2.0f;
+    const float w      = size.w * 2.0f;
+    const float h      = size.h * 2.0f;
     const float aspect = window.getWidth() / static_cast<float>(window.getHeight());
-    const float th     = thickness;          // Vertical thickness (Top/Bottom bars)
-    const float tw     = thickness / aspect;
+    const float th     = thickness * 2.0f;
+    const float tw     = (thickness * 2.0f) / aspect;
     constexpr float z  = 0.f;
     const vec4 c       = color;
 
@@ -60,39 +59,27 @@ void gan::FractalPanel::genBorder(const Window& window, vec2 pos, vec2 size, vec
         {right - tw, bottom, z, c.r, c.g, c.b, c.a},
     };
 
-    if (borderVB.vao != 0) {
-        VBuffer<CVertex>::destroy(borderVB);
+    borderVB = VBuffer<CVertex>::make(borderVertices, 24);
+}
+
+gan::GPUFractalPanel::GPUFractalPanel()
+    : panelID(std::to_string(fractal::getPanelNumber())) {}
+
+bool gan::GPUFractalPanel::embed(const fractal_id id) {
+    if (id >= gpu_fractal::totalFractalNum) {
+        GAN_AppendLog("GPUFractalPanel::embed()", "Fractal id provided: ", id, " is above total fractal num.");
+        return false;
     }
-
-    borderVB = std::move(VBuffer<CVertex>::make(borderVertices, 24));
-}
-
-gan::FractalPanel::FractalPanel(std::unique_ptr<gan::Fractal> fractal)
-    :  frac(std::move(fractal))
-{
-    static int numPanels = 0;
-    panelID = std::to_string(numPanels++);
-}
-
-gan::FractalPanel::~FractalPanel() {
-    VBuffer<CVertex>::destroy(borderVB);
-}
-
-std::unique_ptr<gan::Fractal> gan::FractalPanel::embed(std::unique_ptr<Fractal> fractal) {
-    if (fractal != nullptr) {
-        std::unique_ptr<Fractal> old_fractal = std::move(this->frac);
-        this->frac = std::move(fractal);
-        return std::move(old_fractal);
+    auto opt = GPUFractal::make_unique(gpu_fractal::fractalInfo[id]);
+    if (!opt) {
+        GAN_AppendLog("GPUFractalPanel::embed()", "Fractal Failed to generate.");
+        return false;
     }
-    return nullptr;
+    this->frac = std::move(opt.value());
+    return true;
 }
 
-std::unique_ptr<gan::Fractal> gan::FractalPanel::extract() {
-    return std::move(frac);
-}
-
-
-void gan::FractalPanel::imguiBegin(const Window& window) {
+void gan::GPUFractalPanel::imguiBegin(const Window& window) {
     SDL_GL_MakeCurrent(window, window.getGLContext());
     ImGui::PushID(panelID.c_str());
     if (frac) {
@@ -105,10 +92,11 @@ void gan::FractalPanel::imguiBegin(const Window& window) {
         ImGui::Begin(std::format("~ERR~ {} [{}]. frac = nullptr", frac->name, panelID).c_str());
     }
 
-    ImGui::SetWindowPos({(frac->windowPos.x+thickness/2)*window.getWidth(), (frac->windowPos.y+thickness/2)*window.getHeight()});
+    ImGui::SetWindowPos({frac->windowPos.x * window.getWidth(), frac->windowPos.y * window.getHeight()}, ImGuiCond_Always);
+    imguiWindowSize = {ImGui::GetWindowSize().x / window.getWidth(), ImGui::GetWindowSize().y / window.getHeight()};
 }
 
-void gan::FractalPanel::imguiBody(const Window& window) {
+void gan::GPUFractalPanel::imguiBody(const Window& window) {
 
 
     if (frac) {
@@ -176,35 +164,35 @@ void gan::FractalPanel::imguiBody(const Window& window) {
     }
 }
 
-void gan::FractalPanel::displayProperty(const size_t id) const {
+void gan::GPUFractalPanel::displayProperty(const size_t id) const {
     auto& p = frac->properties[id];
     bool update = false;
 
     ImGui::PushID(id);
     ImGui::Text("%s", p.propertyName);
     switch (p.type) {
-    case fractal::FLOAT:
-        update = ImGui::SliderFloat("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max);
+    case gpu_fractal::FLOAT:
+        update = ImGui::SliderFloat("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max, "%.6f");
         break;
-    case fractal::VEC2:
-        update = ImGui::SliderFloat2("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max);
+    case gpu_fractal::VEC2:
+        update = ImGui::SliderFloat2("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max, "%.6f");
         break;
-    case fractal::VEC3:
-        update = ImGui::SliderFloat3("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max);
+    case gpu_fractal::VEC3:
+        update = ImGui::SliderFloat3("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max, "%.6f");
         break;
-    case fractal::VEC4:
-        update = ImGui::SliderFloat4("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max);
+    case gpu_fractal::VEC4:
+        update = ImGui::SliderFloat4("##p", reinterpret_cast<float*>(&p.data), p.bounds.min, p.bounds.max, "%.6f");
         break;
-    case fractal::INT:
+    case gpu_fractal::INT:
         update = ImGui::SliderInt("##p", reinterpret_cast<int*>(&p.data), p.bounds.min, p.bounds.max);
         break;
-    case fractal::IVEC2:
+    case gpu_fractal::IVEC2:
         update = ImGui::SliderInt2("##p", reinterpret_cast<int*>(&p.data), p.bounds.min, p.bounds.max);
         break;
-    case fractal::IVEC3:
+    case gpu_fractal::IVEC3:
         update = ImGui::SliderInt3("##p", reinterpret_cast<int*>(&p.data), p.bounds.min, p.bounds.max);
         break;
-    case fractal::IVEC4:
+    case gpu_fractal::IVEC4:
         update = ImGui::SliderInt4("##p", reinterpret_cast<int*>(&p.data), p.bounds.min, p.bounds.max);
         break;
     }
@@ -216,13 +204,13 @@ void gan::FractalPanel::displayProperty(const size_t id) const {
     ImGui::PopID();
 }
 
-void gan::FractalPanel::imguiEnd() {
+void gan::GPUFractalPanel::imguiEnd() {
     ImGui::End();
     ImGui::PopID();
 }
 
 static GLuint borderShaderProgram() {
-    const char vert[] =
+    constexpr char vert[] =
 #ifdef SDL_API_OpenGL_Core
 R"(#version 410 core)"
 #else
@@ -242,7 +230,7 @@ void main() {
     vColor = aColor;
 }
 )";
-    const char frag[] =
+    constexpr char frag[] =
 #ifdef SDL_API_OpenGL_Core
 R"(#version 410 core)"
 #else
@@ -260,11 +248,12 @@ void main() {
     color = vColor;
 }
 )";
+    std::println("Making shader program");
     return gan::err::unwrap(gan::gl::rawMakeShaderProgram({{vert, sizeof(vert)}}, {{frag, sizeof(frag)}}),
         "borderShaderProgram() in FractalPanel.cpp", "Oops");
 }
 
-void gan::FractalPanel::draw(const gan::Window& window, bool updateMouse, vec2 mousePos) {
+void gan::GPUFractalPanel::draw(const gan::Window& window, bool updateMouse, vec2 mousePos) {
     if (frac != nullptr) {
         frac->tick();
         frac->draw(window);
@@ -278,7 +267,7 @@ void gan::FractalPanel::draw(const gan::Window& window, bool updateMouse, vec2 m
     }
 }
 
-std::string gan::FractalPanel::checkHealth() {
+std::string gan::GPUFractalPanel::checkHealth() {
     return std::format("===== Fractal Panel Health ======\n"
                       "Panel ID    = {}\n{}",
                       panelID,
@@ -286,29 +275,30 @@ std::string gan::FractalPanel::checkHealth() {
 
 }
 
-bool gan::FractalPanel::containedWithin(vec2 pos) const {
+bool gan::GPUFractalPanel::containedWithin(vec2 m_pos) const {
     if (frac == nullptr) return false;
-    if (pos.x >= frac->windowPos.x &&
-        pos.y >= frac->windowPos.y)
-    {
-        return (!(pos.x <= frac->windowPos.x + imguiWindowSize.x &&
-                pos.y <= frac->windowPos.y + imguiWindowSize.y) &&
-                pos.x <= frac->windowPos.x + frac->windowSize.x &&
-                pos.y <= frac->windowPos.y + frac->windowSize.y);
-    }
-    return false;
+    if (m_pos.y <= (imguiWindowSize.h+frac->windowPos.y) && m_pos.x <= (imguiWindowSize.w+frac->windowPos.x))
+        return false;
+    return (m_pos.x >= frac->windowPos.x &&
+            m_pos.x <= frac->windowPos.x + frac->windowSize.x &&
+            m_pos.y >= frac->windowPos.y &&
+            m_pos.y <= frac->windowPos.y + frac->windowSize.y);
 }
 
-gan::vec2 gan::FractalPanel::normalizeToFractalPos(vec2 pos, const Window& window) const {
-    pos.y = 1 - pos.y;
-    pos -= frac->windowPos;
-    pos -= vec2{0.5, 0.5};
+gan::vec2 gan::GPUFractalPanel::normalizeToFractalPos(const Window& window, vec2 pos) const {
+    // 1. Shift by windowPos to get coordinates relative to the panel's top-left (0..1 within panel)
+    pos.x -= frac->windowPos.x;
+    pos.y += frac->windowPos.y;
+    // 3. Shift to (-0.5 .. 0.5) and flip Y (OpenGL Y is up, but window Y is down)
+    pos -= vec2{0.5f, 0.5f};
+    pos.y *= -1.0f;
+    // 4. Scale and adjust for aspect ratio
     pos *= frac->scale;
-    pos.x*= static_cast<float>(window.getWidth())/window.getHeight();
+    pos.x *= (window.getWidth()) / (window.getHeight());
     return frac->centerPos + pos;
 }
 
-void gan::FractalPanel::reframe(const Window& window, vec2 pos, vec2 size) {
+void gan::GPUFractalPanel::reframe(const Window& window, vec2 pos, vec2 size) {
     if (frac != nullptr) {
         frac->windowPos = pos;
         frac->windowSize = size;
@@ -317,7 +307,7 @@ void gan::FractalPanel::reframe(const Window& window, vec2 pos, vec2 size) {
     genBorder(window, pos, size, {.8f, .8f, .8f, 1.f}, 0.005);
 }
 
-void gan::FractalPanel::reframe(const Window& window) {
+void gan::GPUFractalPanel::reframe(const Window& window) {
     if (frac != nullptr) {
         frac->reframe(window);
         genBorder(window, frac->windowPos, frac->windowSize, {.8f, .8f, .8f, 1.f}, 0.005);
@@ -326,41 +316,47 @@ void gan::FractalPanel::reframe(const Window& window) {
     }
 }
 
-void gan::FractalPanel::moveFractal(const vec2 delta) const {
-    if (!interactedThisFrame) {
-        frac->centerPos.x -= delta.x;
-        frac->centerPos.y -= delta.y;
-        frac->uCenterPos2f();
-    }
+void gan::GPUFractalPanel::moveFractal(const Window& window, const Mouse& m) {
+    const float aspect_ratio = (window.getWidth())/window.getHeight();
+    frac->centerPos.x -= m.getDeltaX()*frac->scale/window.getWidth() * aspect_ratio;
+    frac->centerPos.y += m.getDeltaY()*frac->scale/window.getHeight();
+    frac->uCenterPos2f();
 }
 
-float gan::FractalPanel::getScale() const {
-    if (frac == nullptr) return 0.f;
-    return frac->scale;
-}
+void gan::GPUFractalPanel::zoom(const Window& window, const Mouse& mouse) {
+    #ifndef __EMSCRIPTEN__
+    constexpr float zoomAmount = -0.1f;
+    #else
+    constexpr float zoomAmount = -0.3f;
+    #endif
 
-void gan::FractalPanel::setScale(const float scale) const {
-    if (frac == nullptr) return;
-    frac->scale = scale;
+    const float oldScale = frac->scale;
+    const float zoomFactor = std::exp(mouse.getScrollWheelY() * zoomAmount);
+    const float newScale = oldScale * zoomFactor;
+
+    const vec2 mpos = mouse.getPos(); // pixel coords
+    const auto winSize = vec2{window.getWidth(), window.getHeight()};
+
+    const vec2 ndc = vec2{mpos.x / winSize.x, mpos.y/winSize.y} * 2.0f - vec2{1.0f, 1.f};
+
+    const vec2 windowPos{frac->windowPos.x, -1.f*frac->windowPos.y};
+    const vec2 adjPos = (ndc - windowPos*2.f);
+    const vec2 before = frac->centerPos + adjPos* oldScale;
+
+    frac->scale = newScale;
     frac->uScale1f();
+
+    const vec2 after = frac->centerPos + adjPos * newScale;
+    vec2 composite = before - after;
+    composite.y *= -1.f;
+
+    composite.x *= window.getWidth()/window.getHeight();
+
+    frac->centerPos += composite/2.f;
+    frac->uCenterPos2f();
 }
 
-gan::vec2 gan::FractalPanel::getCenterPos() const {
-    if (frac == nullptr) return {0.f, 0.f};
-    return frac->centerPos;
-}
-
-gan::vec2 gan::FractalPanel::getWindowPos() const {
-    if (frac == nullptr) return {0.f, 0.f};
-    return frac->windowPos;
-}
-
-gan::vec2 gan::FractalPanel::getWindowDimensions() const {
-    if (frac == nullptr) return vec2{0.f, 0.f};
-    return frac->windowSize;
-}
-
-void gan::FractalPanel::setCenterPos(vec2 startPos) const {
+void gan::GPUFractalPanel::setCenterPos(vec2 startPos) const {
     if (frac == nullptr) return;
     frac->centerPos = startPos;
     frac->uCenterPos2f();

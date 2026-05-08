@@ -6,9 +6,9 @@ using namespace gan;
 void FractalExplorer::display(const Window& window, vec2 mousePos) {
 
     // Now we go through each of our view
-
     cursor.tick(compilerGUI.freezeCursor);
 
+    // Tracks the CURSOR POSITION on a FRACTAL
     if (cursor.selectedFractal != -1) {
 
         ImGui::SetNextWindowPos(ImVec2(mousePos.x + 5, mousePos.y - 30));
@@ -29,8 +29,9 @@ void FractalExplorer::display(const Window& window, vec2 mousePos) {
     }
 
 reset_display:
+    // EACH FRACTAL'S INDIVIDUAL MENU
     for (auto it = panels.begin(); it != panels.end(); ++it) {
-        it->imguiBegin(window);
+        (*it)->imguiBegin(window);
 
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.2f, 0.2f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.7f, 0.3f, 0.3f, 1.0f));
@@ -38,20 +39,19 @@ reset_display:
         bool remove = ImGui::Button("Remove Fractal");
         ImGui::PopStyleColor(3);
 
-        it->imguiBody(window);
-        it->imguiEnd();
+        (*it)->imguiBody(window);
+        (*it)->imguiEnd();
 
         if (remove) {
             panels.erase(it);
             reorganize(window);
             goto reset_display;
-        } else {
-            it->draw(window, !compilerGUI.freezeCursor, cursor.selectionPos);
         }
+        (*it)->draw(window, !compilerGUI.freezeCursor, cursor.selectionPos);
     }
 
     // First get what we need from the compiler GUI.
-    auto result = compilerGUI.display(window, panels.size());
+    FractalCompilerGUI::displayResult result = compilerGUI.display(window, panels.size());
     if (result == FractalCompilerGUI::NEW_FRACTAL_PANEL) {
         instantiateFractalPanel(compilerGUI.currentFractalSelection, true);
         reorganize(window);
@@ -68,22 +68,22 @@ void FractalExplorer::toggleCursorFreeze() {
 void FractalExplorer::reorganize(const Window& window) {
     switch (panels.size()) {
     case 1:
-        panels[0].reframe(window, {0.0, 0.0}, {1.0, 1.0});
+        panels[0]->reframe(window, vec2{0.0, 0.0}, vec2{1.0, 1.0});
         break;
     case 2:
-        panels[0].reframe(window, {0.0, 0.0}, {0.5, 1.0});
-        panels[1].reframe(window, {0.5, 0.0}, {0.5, 1.0});
+        panels[0]->reframe(window, vec2{0.0, 0.0}, vec2{0.5, 1.0});
+        panels[1]->reframe(window, vec2{0.5, 0.0}, vec2{0.5, 1.0});
         break;
     case 3:
-        panels[0].reframe(window, {0.0, 0.0}, {1.0, 0.5});
-        panels[1].reframe(window, {0.0, 0.5}, {0.5, 0.5});
-        panels[2].reframe(window, {0.5, 0.5}, {0.5, 0.5});
+        panels[0]->reframe(window, {0.0, 0.0}, {1.0, 0.5});
+        panels[1]->reframe(window, {0.0, 0.5}, {0.5, 0.5});
+        panels[2]->reframe(window, {0.5, 0.5}, {0.5, 0.5});
         break;
     case 4:
-        panels[0].reframe(window, {0.0, 0.0}, {0.5, 0.5});
-        panels[1].reframe(window, {0.5, 0.0}, {0.5, 0.5});
-        panels[2].reframe(window, {0.0, 0.5}, {0.5, 0.5});
-        panels[3].reframe(window, {0.5, 0.5}, {0.5, 0.5});
+        panels[0]->reframe(window, {0.0, 0.0}, {0.5, 0.5});
+        panels[1]->reframe(window, {0.5, 0.0}, {0.5, 0.5});
+        panels[2]->reframe(window, {0.0, 0.5}, {0.5, 0.5});
+        panels[3]->reframe(window, {0.5, 0.5}, {0.5, 0.5});
         break;
     default:
         break;
@@ -104,19 +104,15 @@ void FractalExplorer::instantiateFractalPanel(const fractal_id id, bool newPanel
         if (targetPanel >= fractal::maxFractalViews) {
             targetPanel = fractal::maxFractalViews - 1;
         } else {
-            panels.emplace_back();
+            panels.emplace_back(std::make_unique<GPUFractalPanel>());
         }
     } else if (panels.empty()) {
-        panels.emplace_back();
+        panels.emplace_back(std::make_unique<GPUFractalPanel>());
     } else {
         targetPanel--;
     }
 
-    auto uniqueOpt = Fractal::make_unique(
-        fractal::fractalInfo[id]
-    );
-    if (uniqueOpt) {
-        panels[targetPanel].embed(std::move(uniqueOpt.value()));
+    if (panels[targetPanel]->embed(id)) {
         compilerGUI.clearCompileError();
     } else {
         compilerGUI.reportCompileError();

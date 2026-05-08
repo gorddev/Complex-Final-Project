@@ -1,16 +1,16 @@
 #pragma once
 #include <vector>
-#include "fractals/FractalPanel.hpp"
+#include "gpu-fractals/GPUFractalPanel.hpp"
 #include "gui-classes/FractalCompilerGUI.hpp"
 #include "gui-classes/FractalCursor.hpp"
 
 namespace gan {
 
-    /** Contains all FractalViews and already compiled fractals.
+    /** Contains all FractcalViews and already compiled fractals.
      *  Generates new fractals and handles the distribution of input to all fractals */
     class FractalExplorer {
     private:
-        std::vector<FractalPanel> panels;               ///< All currently active views into fractals.
+        std::vector<std::unique_ptr<FractalPanel>> panels; ///< All currently active views into fractals.
         FractalCompilerGUI compilerGUI;
         FractalCursor cursor;
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "SDL_API.h"
-#include "../fractaldef.hpp"
+#include "../gpu-fractals/gpu_fractaldef.hpp"
 
 /* Created by Gordie Novak on 4/7/26.
  * Purpose: 
@@ -24,7 +24,7 @@ namespace gan {
             displayResult ret = NO_RESULT;
             ImGui::Begin("Compiler", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
 
-            ImGui::Combo("##Compile", &currentFractalSelection, fractal::fractalNames, fractal::totalFractalNum, 8);
+            ImGui::Combo("##Compile", &currentFractalSelection, gpu_fractal::fractalNames.data(), gpu_fractal::totalFractalNum, 8);
             if (num_fractal_panels == 0) {
                 // Compile Button
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.2f, 1.0f));
@@ -53,19 +53,23 @@ namespace gan {
                 ImGui::PopStyleColor(6);
             }
 
+            // Compile Errors
+            if (failedLastCompilation) {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.2f, 0.2f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.7f, 0.3f, 0.3f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
+                ImGui::Button("Compilation Failed.");
+                ImGui::PopStyleColor(3);
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("%s", compilationFailureError.c_str());
+                }
+            }
+
             ImGui::Separator(); // ———————————————
             ImGui::Checkbox("Freeze Cursor (Press Enter)", &freezeCursor);
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Prevents the cursor from changing fractals\n"
                                   "that are typically affected by cursor position.");
-            }
-
-            // Compile Errors
-            if (failedLastCompilation) {
-                ImGui::Text("Compilation Failed. Hover for error.");
-                if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("%s", compilationFailureError.c_str());
-                }
             }
 
             ImGui::Separator(); // ——————————

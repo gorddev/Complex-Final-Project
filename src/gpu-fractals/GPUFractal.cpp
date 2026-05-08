@@ -1,17 +1,18 @@
-#include "./Fractal.hpp"
+#include "./GPUFractal.hpp"
 #include <fstream>
 #include <string>
 #include <utility>
 
-#include "FractalInfo.hpp"
+#include "fractaldef.hpp"
+#include "GPUFractalInfo.hpp"
 
 
-gan::Fractal::Fractal(const GLint uResolution, const GLint uMousePos, const GLint uIterations, const GLint uScale,
+gan::GPUFractal::GPUFractal(const GLint uResolution, const GLint uMousePos, const GLint uIterations, const GLint uScale,
                 const GLint uCenterPos, const GLint uWindowPos, const GLint uColorCount, const GLint uColors,
                 const GLuint vao, const GLuint vbo, const GLuint shader, std::string name,
-                fractal::Uniform extraUniforms[], const size_t numExtraUniforms, const char description[])
+                gpu_fractal::Uniform extraUniforms[], const size_t numExtraUniforms, const char description[])
         :   centerPos({0,0}),
-            scale(fractal::defaultScale),
+            scale(gan::fractal::defaultScale),
             properties{},
             numProperties(numExtraUniforms),
             iterations(50),
@@ -28,7 +29,7 @@ gan::Fractal::Fractal(const GLint uResolution, const GLint uMousePos, const GLin
     uColors3fv();
 
     // Get all extra uniforms into the fractal.
-    for (int i = 0; i < std::min(numExtraUniforms, fractal::maxExtraUniforms); i++) {
+    for (u32 i = 0; i < std::min(numExtraUniforms, gpu_fractal::maxExtraUniforms); i++) {
         properties[i] = extraUniforms[i];
         uProperties[i] = glGetUniformLocation(shader, extraUniforms[i].shaderHandle);
         uProperty(i);
@@ -82,7 +83,7 @@ ErrCode create_fractal_gl_object(GLuint& vao, GLuint& vbo, GLuint& program, cons
     return SUCCESS;
 }
 
-std::optional<gan::Fractal> gan::Fractal::make(FractalInfo info) {
+std::optional<gan::GPUFractal> gan::GPUFractal::make(GPUFractalInfo info) {
     // first ensure that SDL has been initialized
     gan::ensure_SDL_init();
 
@@ -92,7 +93,9 @@ std::optional<gan::Fractal> gan::Fractal::make(FractalInfo info) {
 
     if (e != SUCCESS) return std::nullopt;
 
-    return Fractal{
+    std::optional<gan::GPUFractal> result;
+
+    return GPUFractal{
         glGetUniformLocation(program, "uResolution"),
         glGetUniformLocation(program, "uMousePos"),
         glGetUniformLocation(program, "uIterations"),
@@ -108,7 +111,7 @@ std::optional<gan::Fractal> gan::Fractal::make(FractalInfo info) {
     };
 }
 
-std::optional<std::unique_ptr<gan::Fractal>> gan::Fractal::make_unique(FractalInfo info) {
+std::optional<std::unique_ptr<gan::GPUFractal>> gan::GPUFractal::make_unique(GPUFractalInfo info) {
     // first ensure that SDL has been initialized
     ensure_SDL_init();
 
@@ -117,7 +120,7 @@ std::optional<std::unique_ptr<gan::Fractal>> gan::Fractal::make_unique(FractalIn
 
     if (e != SUCCESS) return std::nullopt;
     // ReSharper disable once CppDFAMemoryLeak
-    return std::unique_ptr<Fractal>(new Fractal{
+    return std::unique_ptr<GPUFractal>(new GPUFractal{
         glGetUniformLocation(program, "uResolution"),
         glGetUniformLocation(program, "uMousePos"),
         glGetUniformLocation(program, "uIterations"),
@@ -133,23 +136,23 @@ std::optional<std::unique_ptr<gan::Fractal>> gan::Fractal::make_unique(FractalIn
     });
 }
 
-void smooth_move(const gan::fractal::UniformData& data, gan::fractal::UniformData& sendData, float smooth_factor) {
+void smooth_move(const gan::gpu_fractal::UniformData& data, gan::gpu_fractal::UniformData& sendData, float smooth_factor) {
     sendData.x += (data.x - sendData.x) * smooth_factor;
     sendData.y += (data.y - sendData.y) * smooth_factor;
     sendData.z += (data.z - sendData.z) * smooth_factor;
     sendData.w += (data.w - sendData.w) * smooth_factor;
 }
 
-void gan::Fractal::tick() {
+void gan::GPUFractal::tick() {
     for (size_t i = 0; i < numProperties; ++i) {
-        if (properties[i].type < fractal::INT) {
+        if (properties[i].type < gpu_fractal::INT) {
             smooth_move(properties[i].data, smoothProperties[i], properties[i].smoothing);
             uProperty(i);
         }
     }
 }
 
-std::string gan::Fractal::checkHealth() const {
+std::string gan::GPUFractal::checkHealth() const {
     std::string health;
     std::string unhealthy;
 
@@ -193,12 +196,12 @@ std::string gan::Fractal::checkHealth() const {
         health += unhealthy;
     }
 
-    auto v4tstr = [](const fractal::UniformData& v) {
+    auto v4tstr = [](const gpu_fractal::UniformData& v) {
         return std::string("{") + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
         + std::to_string(v.z) + ", " + std::to_string(v.w) + "}";
     };
 
-    auto iv4tstr = [](const fractal::UniformData& v) {
+    auto iv4tstr = [](const gpu_fractal::UniformData& v) {
         return std::string("{") + std::to_string(v.ix) + ", " + std::to_string(v.iy) + ", "
         + std::to_string(v.iz) + ", " + std::to_string(v.iw) + "}";
     };
@@ -206,7 +209,7 @@ std::string gan::Fractal::checkHealth() const {
     if (numProperties > 0)
         health += "\n~ Additional Property Info ~\n";
     for (size_t i = 0; i < numProperties; ++i) {
-        if (properties[i].type <= fractal::VEC4) {
+        if (properties[i].type <= gpu_fractal::VEC4) {
             health += std::format("Prop Name: {}\n"
                                      ":: Exact:  {}\n"
                                      ":: Smooth: {}", properties[i].propertyName,
@@ -223,60 +226,60 @@ std::string gan::Fractal::checkHealth() const {
     return health;
 }
 
-void gan::Fractal::updateHealth() {
+void gan::GPUFractal::updateHealth() {
     healthStr = checkHealth();
 }
 
-void gan::Fractal::uCenterPos2f() const {
+void gan::GPUFractal::uCenterPos2f() const {
     if (uCenterPos >= 0) {
         glUseProgram(shader);
         glUniform2f(uCenterPos, centerPos.x, centerPos.y);
     }
 }
 
-void gan::Fractal::uWindowDimensions4f() const {
+void gan::GPUFractal::uWindowDimensions4f() const {
     if (uWindowDimensions >= 0) {
         glUseProgram(shader);
         glUniform4f(uWindowDimensions, windowPos.x, windowPos.y, windowSize.x, windowSize.y);
     }
 }
 
-void gan::Fractal::uMousePos2f(const vec2 selectionPos) const {
+void gan::GPUFractal::uMousePos2f(const vec2 selectionPos) const {
     if (uMousePos >= 0) {
         glUseProgram(shader);
         glUniform2f(uMousePos, selectionPos.x, selectionPos.y);
     }
 }
 
-void gan::Fractal::uScale1f() const {
+void gan::GPUFractal::uScale1f() const {
     if (uScale >= 0) {
         glUseProgram(shader);
         glUniform1f(uScale, scale);
     }
 }
 
-void gan::Fractal::uIterations1i() const {
+void gan::GPUFractal::uIterations1i() const {
     if (uIterations >= 0) {
         glUseProgram(shader);
         glUniform1i(uIterations, iterations);
     }
 }
 
-void gan::Fractal::uNumColors1i() const {
+void gan::GPUFractal::uNumColors1i() const {
     if (uColorCount >= 0) {
         glUseProgram(shader);
         glUniform1i(uColorCount, std::min(numColors, 8));
     }
 }
 
-void gan::Fractal::uColors3fv() const {
+void gan::GPUFractal::uColors3fv() const {
     if (uColors >= 0) {
         glUseProgram(shader);
         glUniform3fv(uColors, 8, reinterpret_cast<const float*>(&colors[0]));
     }
 }
 
-gan::Fractal::~Fractal() {
+gan::GPUFractal::~GPUFractal() {
     if (vao != 0) {
         glDeleteBuffers(1, &vbo);
         glDeleteVertexArrays(1, &vao);
@@ -284,7 +287,7 @@ gan::Fractal::~Fractal() {
     }
 }
 
-gan::Fractal::Fractal(Fractal&& o)
+gan::GPUFractal::GPUFractal(GPUFractal&& o)
     noexcept : centerPos({0, 0}),
                scale(1.0), numProperties(o.numProperties),
                iterations(50),
@@ -296,13 +299,13 @@ gan::Fractal::Fractal(Fractal&& o)
     o.vao    = 0;
     o.vbo    = 0;
     o.shader = 0;
-    for (int i = 0; i < numProperties; i++) {
+    for (size_t i = 0; i < numProperties; i++) {
         properties[i] = o.properties[i];
     }
 }
 
-gan::Fractal& gan::Fractal::operator=(Fractal&& o) noexcept{
-    this->~Fractal();
+gan::GPUFractal& gan::GPUFractal::operator=(GPUFractal&& o) noexcept{
+    this->~GPUFractal();
     uResolution = o.uResolution;
     uMousePos   = o.uMousePos;
     uIterations = o.uIterations;
@@ -314,7 +317,7 @@ gan::Fractal& gan::Fractal::operator=(Fractal&& o) noexcept{
     scale       = o.scale;
     centerPos  = o.centerPos;
     iterations  = o.iterations;
-    for (int i = 0; i < numProperties; i++) {
+    for (size_t i = 0; i < numProperties; i++) {
         properties[i] = o.properties[i];
     }
     *const_cast<size_t*>(&numProperties) = o.numProperties;
@@ -324,48 +327,48 @@ gan::Fractal& gan::Fractal::operator=(Fractal&& o) noexcept{
     return *this;
 }
 
-void gan::Fractal::uProperty(const size_t id) const {
+void gan::GPUFractal::uProperty(const size_t id) const {
     if (id < numProperties && uProperties[id] >= 0) {
-        const fractal::Uniform& i = properties[id];
-        const fractal::UniformData& s = smoothProperties[id];
+        const gpu_fractal::Uniform& i = properties[id];
+        const gpu_fractal::UniformData& s = smoothProperties[id];
 
         glUseProgram(shader);
         switch (properties[id].type) {
-        case fractal::INT:
+        case gpu_fractal::INT:
             glUniform1i(uProperties[id], i.data.ix);
             break;
-        case fractal::IVEC2:
+        case gpu_fractal::IVEC2:
             glUniform2i(uProperties[id], i.data.ix, i.data.iy);
             break;
-        case fractal::IVEC3:
+        case gpu_fractal::IVEC3:
             glUniform3i(uProperties[id], i.data.ix, i.data.iy, i.data.iz);
             break;
-        case fractal::IVEC4:
+        case gpu_fractal::IVEC4:
             glUniform4i(uProperties[id], i.data.ix, i.data.iy, i.data.iz, i.data.iw);
             break;
-        case fractal::FLOAT:
+        case gpu_fractal::FLOAT:
             glUniform1f(uProperties[id], s.x);
             break;
-        case fractal::VEC2:
+        case gpu_fractal::VEC2:
             glUniform2f(uProperties[id], s.x, s.y);
             break;
-        case fractal::VEC3:
+        case gpu_fractal::VEC3:
             glUniform3f(uProperties[id], s.x, s.y, s.z);
             break;
-        case fractal::VEC4:
+        case gpu_fractal::VEC4:
             glUniform4f(uProperties[id], s.x, s.y, s.z, s.w);
             break;
         default:
             std::string err = "Got invalid enum in uProperty() function Fractal: ";
             err += std::to_string(static_cast<int>(properties[id].type));
-            throw std::runtime_error(err);
+            std::cerr << err << std::endl;
             break;
         }
     }
 }
 
 
-void gan::Fractal::draw(const Window& window) const {
+void gan::GPUFractal::draw(const Window& window) const {
     glUseProgram(shader);
 
     if (uResolution >= 0)
@@ -379,30 +382,30 @@ void gan::Fractal::draw(const Window& window) const {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void gan::Fractal::reframe(const Window& window)  {
+void gan::GPUFractal::reframe(const Window&) const {
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glUseProgram(shader);
 
     vec2 pos  = windowPos;
     vec2 size = windowSize;
-    pos.x -= 0.5;
-    pos.x *= 2;
-    pos.y = 1 - pos.y;
-    pos.y -= 0.5;
-    pos.y *= 2;
 
-    size.w *= 2;
-    size.h *= 2;
-
-    const vec2 tl = {pos.x, pos.y};        // top left
-    const vec2 bl = {tl.x, tl.y - size.h}; // bottom left
-    const vec2 br = {tl.x + size.w, bl.y}; // bottom right
-    const vec2 tr = {br.x, tl.y};          // top right
+    // Convert from normalized window (0..1, Top-Left) to NDC (-1..1, Center)
+    // X: (pos.x - 0.5) * 2
+    // Y: (0.5 - pos.y) * 2  (0 -> 1, 1 -> -1)
+    float left   = (pos.x - 0.5f) * 2.0f;
+    float top    = (0.5f - pos.y) * 2.0f;
+    float right  = (pos.x + size.x - 0.5f) * 2.0f;
+    float bottom = (0.5f - (pos.y + size.y)) * 2.0f;
 
     const float vertices[] = {
-        tl.x, tl.y, 0.0,   bl.x, bl.y, 0.0,   br.x, br.y, 0.0,
-        tl.x, tl.y, 0.0,   tr.x, tr.y, 0.0,   br.x, br.y, 0.0,
+        left,  top,    0.0f,
+        left,  bottom, 0.0f,
+        right, bottom, 0.0f,
+
+        left,  top,    0.0f,
+        right, top,    0.0f,
+        right, bottom, 0.0f,
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
