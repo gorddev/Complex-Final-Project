@@ -1,24 +1,24 @@
-
-
-
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-
 #include <FractalExplorer.hpp>
-
 #include "include/gui/ImGuiSetup.hpp"
 
+// Window and mouse used for the duration of the program
 gan::Window win;
 gan::Mouse mouse;
-
+// Manages all fractals that are displayed
 gan::FractalExplorer explorer;
+// For the GUI
 ImGuiContext* imgui_context;
 
+
+// This block handles window resizing events if we compile for the WEB. 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
+// web-resize event
 EM_BOOL on_browser_resize([[maybe_unused]] int eventType, [[maybe_unused]] const EmscriptenUiEvent *uiEvent,[[maybe_unused]] void *userData) {
     // Get the new CSS size of the browser window/container
     double css_w, css_h;
@@ -38,6 +38,8 @@ EM_BOOL on_browser_resize([[maybe_unused]] int eventType, [[maybe_unused]] const
 }
 #endif
 
+
+// This function runs on app initialization
 SDL_AppResult SDL_AppInit(void**, int, [[maybe_unused]] char* argv[]) {
     // First, we create the window through which we view the program.
     win = gan::Window::make("Fractal Visualizer", {800, 800},
@@ -67,6 +69,7 @@ SDL_AppResult SDL_AppInit(void**, int, [[maybe_unused]] char* argv[]) {
     return SDL_APP_CONTINUE;
 }
 
+// This function runs every frame (with JavaScript requestAnimationFrame for web-browsers)
 SDL_AppResult SDL_AppIterate(void*) {
     // Clear the screen ach frame.
     glClear(GL_COLOR_BUFFER_BIT);
@@ -85,6 +88,7 @@ SDL_AppResult SDL_AppIterate(void*) {
     return SDL_APP_CONTINUE;
 }
 
+// Called each time an SDL event occurs. 
 SDL_AppResult SDL_AppEvent(void*, SDL_Event* event) {
     SDL_Event& e = *event;
 
@@ -126,6 +130,7 @@ SDL_AppResult SDL_AppEvent(void*, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
+// Called upon program exit. Only useful for local development. Has no effect on the web. 
 void SDL_AppQuit([[maybe_unused]] void* appstate, [[maybe_unused]] SDL_AppResult result) {
     gan::imgui::shutdown(imgui_context);
 }
