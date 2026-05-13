@@ -54,7 +54,7 @@ target_link_libraries(fractal
 
 
 target_compile_options(fractal PRIVATE
-    -O0
+    -O3
     -ffast-math
     -Werror
     -Wall
