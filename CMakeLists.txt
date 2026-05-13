@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.0)
 
-project(Fractal_Visualizer)
+project(fractal)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -16,28 +16,29 @@ if (NOT EMSCRIPTEN)
     add_subdirectory("external/boost" SYSTEM)
 endif()
 
-add_executable(Fractal_Visualizer
+add_executable(fractal
     main.cpp
-    src/gpu-fractals/GPUFractal.hpp
+    include/gpu-fractals/GPUFractal.hpp
     src/gpu-fractals/GPUFractal.cpp
     src/gpu-fractals/GPUFractalPanel.cpp
-    src/gui-classes/ColorSelectorGUI.cpp
+    src/gui/ColorSelectorGUI.cpp
     src/FractalExplorer.cpp
     src/cpu-fractals/CPUFractal.cpp
     src/cpu-fractals/FractalMultithreader.cpp
+    src/gui/FractalCursor.cpp
 )
 
-target_include_directories(Fractal_Visualizer PRIVATE
+target_include_directories(fractal PRIVATE
     ${CMAKE_SOURCE_DIR}/external
-    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include
     #${MPFR_INCLUDE_DIR}
 )
 
 if (NOT EMSCRIPTEN)
-    target_include_directories(Fractal_Visualizer PRIVATE SYSTEM
+    target_include_directories(fractal PRIVATE SYSTEM
         ${CMAKE_SOURCE_DIR}/external/boost/include
     )
-    target_link_libraries(Fractal_Visualizer PRIVATE
+    target_link_libraries(fractal PRIVATE
         Boost::multiprecision
     )
 endif()
@@ -46,14 +47,14 @@ endif()
 
 find_package(SDL3)
 
-target_link_libraries(Fractal_Visualizer
+target_link_libraries(fractal
     PUBLIC
     SDL_API
 )
 
 
-target_compile_options(Fractal_Visualizer PRIVATE
-    -O3
+target_compile_options(fractal PRIVATE
+    -O0
     -ffast-math
     -Werror
     -Wall
@@ -64,7 +65,7 @@ target_compile_options(Fractal_Visualizer PRIVATE
 )
 
 
-target_link_options(Fractal_Visualizer PRIVATE
+target_link_options(fractal PRIVATE
     -flto
     -ffast-math
     -g0

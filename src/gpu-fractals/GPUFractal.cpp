@@ -1,16 +1,16 @@
-#include "./GPUFractal.hpp"
+#include "../../include/gpu-fractals/GPUFractal.hpp"
 #include <fstream>
 #include <string>
 #include <utility>
 
-#include "fractaldef.hpp"
-#include "GPUFractalInfo.hpp"
+#include "../../include/fractaldef.hpp"
+#include "../../include/gpu-fractals/GPUFractalInfo.hpp"
 
 
 gan::GPUFractal::GPUFractal(const GLint uResolution, const GLint uMousePos, const GLint uIterations, const GLint uScale,
                 const GLint uCenterPos, const GLint uWindowPos, const GLint uColorCount, const GLint uColors,
                 const GLuint vao, const GLuint vbo, const GLuint shader, std::string name,
-                gpu_fractal::Uniform extraUniforms[], const size_t numExtraUniforms, const char description[])
+                gpu_f::Uniform extraUniforms[], const size_t numExtraUniforms, const char description[])
         :   centerPos({0,0}),
             scale(gan::fractal::defaultScale),
             properties{},
@@ -29,7 +29,7 @@ gan::GPUFractal::GPUFractal(const GLint uResolution, const GLint uMousePos, cons
     uColors3fv();
 
     // Get all extra uniforms into the fractal.
-    for (u32 i = 0; i < std::min(numExtraUniforms, gpu_fractal::maxExtraUniforms); i++) {
+    for (u32 i = 0; i < std::min(numExtraUniforms, gpu_f::maxExtraUniforms); i++) {
         properties[i] = extraUniforms[i];
         uProperties[i] = glGetUniformLocation(shader, extraUniforms[i].shaderHandle);
         uProperty(i);
@@ -136,7 +136,7 @@ std::optional<std::unique_ptr<gan::GPUFractal>> gan::GPUFractal::make_unique(GPU
     });
 }
 
-void smooth_move(const gan::gpu_fractal::UniformData& data, gan::gpu_fractal::UniformData& sendData, float smooth_factor) {
+void smooth_move(const gan::gpu_f::UniformData& data, gan::gpu_f::UniformData& sendData, float smooth_factor) {
     sendData.x += (data.x - sendData.x) * smooth_factor;
     sendData.y += (data.y - sendData.y) * smooth_factor;
     sendData.z += (data.z - sendData.z) * smooth_factor;
@@ -145,7 +145,7 @@ void smooth_move(const gan::gpu_fractal::UniformData& data, gan::gpu_fractal::Un
 
 void gan::GPUFractal::tick() {
     for (size_t i = 0; i < numProperties; ++i) {
-        if (properties[i].type < gpu_fractal::INT) {
+        if (properties[i].type < gpu_f::INT) {
             smooth_move(properties[i].data, smoothProperties[i], properties[i].smoothing);
             uProperty(i);
         }
@@ -196,12 +196,12 @@ std::string gan::GPUFractal::checkHealth() const {
         health += unhealthy;
     }
 
-    auto v4tstr = [](const gpu_fractal::UniformData& v) {
+    auto v4tstr = [](const gpu_f::UniformData& v) {
         return std::string("{") + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
         + std::to_string(v.z) + ", " + std::to_string(v.w) + "}";
     };
 
-    auto iv4tstr = [](const gpu_fractal::UniformData& v) {
+    auto iv4tstr = [](const gpu_f::UniformData& v) {
         return std::string("{") + std::to_string(v.ix) + ", " + std::to_string(v.iy) + ", "
         + std::to_string(v.iz) + ", " + std::to_string(v.iw) + "}";
     };
@@ -209,7 +209,7 @@ std::string gan::GPUFractal::checkHealth() const {
     if (numProperties > 0)
         health += "\n~ Additional Property Info ~\n";
     for (size_t i = 0; i < numProperties; ++i) {
-        if (properties[i].type <= gpu_fractal::VEC4) {
+        if (properties[i].type <= gpu_f::VEC4) {
             health += std::format("Prop Name: {}\n"
                                      ":: Exact:  {}\n"
                                      ":: Smooth: {}", properties[i].propertyName,
@@ -329,33 +329,33 @@ gan::GPUFractal& gan::GPUFractal::operator=(GPUFractal&& o) noexcept{
 
 void gan::GPUFractal::uProperty(const size_t id) const {
     if (id < numProperties && uProperties[id] >= 0) {
-        const gpu_fractal::Uniform& i = properties[id];
-        const gpu_fractal::UniformData& s = smoothProperties[id];
+        const gpu_f::Uniform& i = properties[id];
+        const gpu_f::UniformData& s = smoothProperties[id];
 
         glUseProgram(shader);
         switch (properties[id].type) {
-        case gpu_fractal::INT:
+        case gpu_f::INT:
             glUniform1i(uProperties[id], i.data.ix);
             break;
-        case gpu_fractal::IVEC2:
+        case gpu_f::IVEC2:
             glUniform2i(uProperties[id], i.data.ix, i.data.iy);
             break;
-        case gpu_fractal::IVEC3:
+        case gpu_f::IVEC3:
             glUniform3i(uProperties[id], i.data.ix, i.data.iy, i.data.iz);
             break;
-        case gpu_fractal::IVEC4:
+        case gpu_f::IVEC4:
             glUniform4i(uProperties[id], i.data.ix, i.data.iy, i.data.iz, i.data.iw);
             break;
-        case gpu_fractal::FLOAT:
+        case gpu_f::FLOAT:
             glUniform1f(uProperties[id], s.x);
             break;
-        case gpu_fractal::VEC2:
+        case gpu_f::VEC2:
             glUniform2f(uProperties[id], s.x, s.y);
             break;
-        case gpu_fractal::VEC3:
+        case gpu_f::VEC3:
             glUniform3f(uProperties[id], s.x, s.y, s.z);
             break;
-        case gpu_fractal::VEC4:
+        case gpu_f::VEC4:
             glUniform4f(uProperties[id], s.x, s.y, s.z, s.w);
             break;
         default:
@@ -372,7 +372,7 @@ void gan::GPUFractal::draw(const Window& window) const {
     glUseProgram(shader);
 
     if (uResolution >= 0)
-        glUniform2f(uResolution, window.getWidth()*window.getDPIScale(), window.getHeight()*window.getDPIScale());
+        glUniform2f(uResolution, window.getPixelWidth(), window.getPixelHeight());
     if (uIterations >= 0)
         glUniform1i(uIterations, iterations);
     if (uScale >= 0)

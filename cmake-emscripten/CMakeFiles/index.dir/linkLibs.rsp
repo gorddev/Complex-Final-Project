@@ -1,0 +1,1 @@
+ SDL_API/libSDL_API.a SDL_API/libImGui.a SDL_API/libGLAD.a /Users/gordie/emsdk/upstream/emscripten/cache/sysroot/lib/libSDL3.a -lm 

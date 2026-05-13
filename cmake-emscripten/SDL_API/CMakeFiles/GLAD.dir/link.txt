@@ -1,0 +1,2 @@
+/Users/gordie/emsdk/upstream/emscripten/emar qc libGLAD.a CMakeFiles/GLAD.dir/external/glad_es/glad/glad.c.o
+/Users/gordie/emsdk/upstream/emscripten/emranlib libGLAD.a

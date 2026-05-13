@@ -1,4 +1,4 @@
-#include "./CPUFractal.hpp"
+#include "../../include/cpu-fractals/CPUFractal.hpp"
 
 using namespace gan;
 

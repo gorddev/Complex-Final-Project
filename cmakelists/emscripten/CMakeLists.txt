@@ -1,13 +1,12 @@
 
 
-target_link_options(Fractal_Visualizer PRIVATE
+target_link_options(fractal PRIVATE
     -Werror
     -Wall
-    -Oz
+    -O0
     -std=c++23
     -Wno-error=limited-postlink-optimizations
     -DGL_SILENCE_DEPRECATION
-
     "--shell-file=${CMAKE_SOURCE_DIR}/cmakelists/emscripten/em_shell.html"
     "-sUSE_WEBGL2=1"
     "--preload-file=shaders"

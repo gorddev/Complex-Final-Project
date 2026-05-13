@@ -1,8 +1,6 @@
 <!doctype html>
 <html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Complex-Analysis Fractal Visualizer</title>
     <style>
       .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
@@ -47,6 +45,8 @@
             outputElement.scrollTop = outputElement.scrollHeight;
           }
         },
+
+        doNotCaptureKeyboard: true,
 
         printErr: function (...args) {
           const text = args.join(' ');

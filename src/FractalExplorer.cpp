@@ -1,4 +1,4 @@
-#include "FractalExplorer.hpp"
+#include <FractalExplorer.hpp>
 
 using namespace gan;
 
@@ -6,10 +6,10 @@ using namespace gan;
 void FractalExplorer::display(const Window& window, vec2 mousePos) {
 
     // Now we go through each of our view
-    cursor.tick(compilerGUI.freezeCursor);
+    cursor.tick(panels, compilerGUI.freezeCursor);
 
     // Tracks the CURSOR POSITION on a FRACTAL
-    if (cursor.selectedFractal != -1) {
+    if (cursor.getSelectedFractal() != -1) {
 
         ImGui::SetNextWindowPos(ImVec2(mousePos.x + 5, mousePos.y - 30));
 
@@ -47,7 +47,7 @@ reset_display:
             reorganize(window);
             goto reset_display;
         }
-        (*it)->draw(window, !compilerGUI.freezeCursor, cursor.selectionPos);
+        (*it)->draw(window);
     }
 
     // First get what we need from the compiler GUI.
@@ -65,7 +65,7 @@ void FractalExplorer::toggleCursorFreeze() {
     compilerGUI.freezeCursor = !compilerGUI.freezeCursor;
 }
 
-void FractalExplorer::reorganize(const Window& window) {
+void FractalExplorer::reorganize(const Window& window) const {
     switch (panels.size()) {
     case 1:
         panels[0]->reframe(window, vec2{0.0, 0.0}, vec2{1.0, 1.0});
@@ -90,17 +90,29 @@ void FractalExplorer::reorganize(const Window& window) {
     }
 }
 
+void FractalExplorer::onMouseDown(const Window& window, const Mouse& mouse) {
+    cursor.onMouseDown(window, mouse, panels);
+}
+
+void FractalExplorer::onMouseRelease(const Window& window, const Mouse& mouse) {
+    cursor.onMouseRelease(window, mouse, panels);
+}
+
 void FractalExplorer::onMouseMotion(const Window&window, const Mouse& mouse) {
-    cursor.onMouseMotion(window, mouse, panels);
+    if (!compilerGUI.isHovered) {
+        cursor.onMouseMotion(window, mouse, panels);
+    }
 }
 
 void FractalExplorer::onMouseWheel(const Window& window, const Mouse& mouse) {
-    cursor.onMouseWheel(window, mouse, panels);
+    if (!compilerGUI.isHovered) {
+        cursor.onMouseWheel(window, mouse, panels);
+    }
 }
 
-void FractalExplorer::instantiateFractalPanel(const fractal_id id, bool newPanel) {
+void FractalExplorer::instantiateFractalPanel(const size_t id, bool createNewPanel) {
     size_t targetPanel = panels.size();
-    if (newPanel || panels.empty()) {
+    if (createNewPanel || panels.empty()) {
         if (targetPanel >= fractal::maxFractalViews) {
             targetPanel = fractal::maxFractalViews - 1;
         } else {

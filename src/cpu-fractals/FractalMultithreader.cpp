@@ -1,4 +1,4 @@
-#include "./FractalMultithreader.hpp"
+#include "../../include/cpu-fractals/FractalMultithreader.hpp"
 
 using namespace gan;
 
