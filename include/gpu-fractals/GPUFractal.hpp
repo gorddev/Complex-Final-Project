@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SDL_API.h"
-#include <span>
 
 #include "gpu_fractaldef.hpp"
 #include "GPUFractalInfo.hpp"

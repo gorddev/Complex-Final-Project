@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SDL_API.h"
-#include <vector>
 
 #include "FractalMultithreader.hpp"
 

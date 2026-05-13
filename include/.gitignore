@@ -1,6 +1,0 @@
-../cmake-build-debug
-cmake-emscripten
-.git
-.idea
-.DS_Store
-external/boost

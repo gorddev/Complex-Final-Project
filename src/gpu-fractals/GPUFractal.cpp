@@ -181,8 +181,8 @@ std::string gan::GPUFractal::checkHealth() const {
     health_check(uIterations, "uIterations");
     health_check(uScale, "uScale");
     health_check(uCenterPos, "uCenterPos");
-    health_check(uWindowDimensions, "uCenterPos");
-    health_check(uColorCount, "uColors");
+    health_check(uWindowDimensions, "uWindowDimensions");
+    health_check(uColorCount, "uColorsCount");
     health_check(uColors, "uColors");
 
     for (size_t i = 0; i < numProperties; ++i) {
@@ -196,11 +196,13 @@ std::string gan::GPUFractal::checkHealth() const {
         health += unhealthy;
     }
 
+    // float vec4 to string
     auto v4tstr = [](const gpu_f::UniformData& v) {
         return std::string("{") + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
         + std::to_string(v.z) + ", " + std::to_string(v.w) + "}";
     };
 
+    // Integer vec4 to string
     auto iv4tstr = [](const gpu_f::UniformData& v) {
         return std::string("{") + std::to_string(v.ix) + ", " + std::to_string(v.iy) + ", "
         + std::to_string(v.iz) + ", " + std::to_string(v.iw) + "}";

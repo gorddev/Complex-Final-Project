@@ -26,10 +26,6 @@ EM_BOOL on_browser_resize([[maybe_unused]] int eventType, [[maybe_unused]] const
 
     double dpr = emscripten_get_device_pixel_ratio();
 
-    std::cerr << "on_browser_resize:" << std::endl;
-    std::cerr << "  CSS: " << css_w << "x" << css_h << std::endl;
-    std::cerr << "  DPR: " << dpr << std::endl;
-
     emscripten_set_canvas_element_size(
         "canvas",
         (int)(css_w * dpr),
@@ -37,8 +33,6 @@ EM_BOOL on_browser_resize([[maybe_unused]] int eventType, [[maybe_unused]] const
     );
 
     win.setDimensions({(int)css_w, (int)css_h});
-
-    std::cerr <<"dpr" << dpr << std::endl;
 
     return EM_TRUE;
 }
@@ -68,7 +62,7 @@ SDL_AppResult SDL_AppInit(void**, int, [[maybe_unused]] char* argv[]) {
     // add the font we'll use in the web browser.
     ImGui::GetIO().Fonts->AddFontFromFileTTF(
         (gan::files::assets()/"JetbrainsMono.ttf").c_str(),
-                16.f);
+                18.f);
 
     return SDL_APP_CONTINUE;
 }
