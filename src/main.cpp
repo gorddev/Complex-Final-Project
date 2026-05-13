@@ -1,8 +1,23 @@
-#define SDL_MAIN_USE_CALLBACKS 1
+/* main.cpp: main entry point of the program. handles:
+ * - startup through SDL_AppInit(...)
+ * - Iteration and looping through SDL_AppIterate(...)
+ * - Event handling through SDL_AppEvent(...)
+ * - Shutdown through SDL_AppQuit(...)
+ */
+
+
+// ****************** INCLUDES **************************
+
+#define SDL_MAIN_USE_CALLBACKS 1    //< so we can use requestAnimationFrame through the web
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <FractalExplorer.hpp>
-#include "include/gui/ImGuiSetup.hpp"
+#include <SDL3/SDL_main.h>          //< required for SDL main functions
+#include <FractalExplorer.hpp>      //< main class that handles navigating through fractals.
+#include "../include/gui/ImGuiSetup.hpp"
+
+
+// ****************** Translation Unit Variables **************************
+/* I know global variables are generally bad practice, but this avoids heap allocation
+ * and this project is simple enough that main.cpp can have global variables. */
 
 // Window and mouse used for the duration of the program
 gan::Window win;
@@ -13,6 +28,8 @@ gan::FractalExplorer explorer;
 ImGuiContext* imgui_context;
 
 
+
+// ****************** Browser-specific considerations **************************
 // This block handles window resizing events if we compile for the WEB. 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>

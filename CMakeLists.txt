@@ -17,7 +17,7 @@ if (NOT EMSCRIPTEN)
 endif()
 
 add_executable(fractal
-    main.cpp
+    src/main.cpp
     include/gpu-fractals/GPUFractal.hpp
     src/gpu-fractals/GPUFractal.cpp
     src/gpu-fractals/GPUFractalPanel.cpp

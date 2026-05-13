@@ -69,7 +69,7 @@ local `std::array`s or `C`-style arrays with maximum limit caps, we can make rea
 while using about only ~500 bytes of memory per fractal. That's about `0.00005%` of a gigabyte.
 
 
-- **documentation**: hahaha im just joking
+- **documentation**: attempt to name things such that documentation is not necessary, but attempt to document key types. 
 
 
 - **move-semantics** use `C++11` move semantics where-ever possible to reduce use-after-free dangers. this includes `std::unique_ptr<T>`.  
@@ -77,6 +77,16 @@ while using about only ~500 bytes of memory per fractal. That's about `0.00005%`
 
 - there's more but im lazy
 
+
+## Project Structure
+
+Here's primarily how the project is structured:
+
+- The `FractalExplorer` handles the "Compile" menu in the bottom right corner and generating new fractals
+- The `FractalPanels` handle the "Fractal" menu in the top left corner and handle propagating user input to the fractal 
+- The `Fractal` classes actuall handle rendering the fractals
+
+now that i write it out it's not so complicated. 
 
 ## Build Instructions:
 You can't build it yourself right now because it utilizes an API I wrote that's not done yet. (See the absolute path in CmakeLists.txt).
